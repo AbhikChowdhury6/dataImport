@@ -18,7 +18,7 @@ def writeHypnoDfParquet(deviceName, hypnoDf):
 def getWorkingHypnoDfParquet(deviceName):
     workingDataSleepPath = workingDataPath + deviceName + "/sleep/"
     parquetName = deviceName + "HypnoDf.parquet.gzip"
-    return pd.read_parquet(workingDataPath + parquetName)
+    return pd.read_parquet(workingDataSleepPath + parquetName)
 
 
 def regroupHypno(hypnoDF, includedTypes):
