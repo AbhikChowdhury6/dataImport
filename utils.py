@@ -13,19 +13,15 @@ exportsDataPath = repoPath + 'dataExports/'
 def getWorkingHRDfParquet(deviceName):
     workingDataHRPath = workingDataPath + deviceName + "/hr/"
     workingDataFiles = os.listdir(workingDataHRPath)
-    columnNames = ["sampleDT", "value"]
+    columnNames = pd.read_parquet(workingDataHRPath + workingDataFiles[0]).columns.to_list()
+    columnNames.insert(0,'sampleDT')
     dfSoFar = pd.DataFrame(columns=columnNames).set_index("sampleDT")
-    # print(dfSoFar.head())
 
     for dataFileName in workingDataFiles:
-        # print(pd.read_parquet(workingDataHRPath + dataFileName).head())
-        # print(pd.read_parquet(workingDataHRPath + dataFileName)['value'].head())
-        # print(dfSoFar.head())
-        dfSoFar['value'] = pd.concat([dfSoFar['value'], pd.read_parquet(workingDataHRPath + dataFileName)['value']]) 
-        # print(dfSoFar.head())
-    dfSoFar = pd.DataFrame(dfSoFar)
+        dfSoFar = pd.concat([dfSoFar, pd.read_parquet(workingDataHRPath + dataFileName)]) 
+    dfSoFar = dfSoFar[~dfSoFar.index.duplicated(keep="first")].sort_index()
 
-    return dfSoFar[~dfSoFar.index.duplicated(keep="first")].sort_index()
+    return pd.DataFrame(dfSoFar['value'])
 
 def writeHypnoDfParquet(deviceName, hypnoDf):
     parquetName = deviceName + "HypnoDf.parquet.gzip"
