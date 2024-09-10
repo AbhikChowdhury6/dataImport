@@ -76,7 +76,7 @@ from datetime import datetime, date, time, timedelta
 import pytz
 import matplotlib.pyplot as plt
 def graphHypnoDate(hypnoDf, forDate, deviceName, cutOffTime = time(12,0,0), timezone = 'US/Arizona'):
-    graphTimeStart = pytz.timezone(timezone).localize(datetime.combine(forDate, cutOffTime))
+    graphTimeStart = pytz.timezone(timezone).localize(datetime.combine(forDate - timedelta(days=1), cutOffTime))
     graphTimeEnd = graphTimeStart + timedelta(days=1)
     hypnoDfForDay = hypnoDf[(hypnoDf['startDate'] < graphTimeEnd) &
                             (hypnoDf['endDate'] > graphTimeStart)]
