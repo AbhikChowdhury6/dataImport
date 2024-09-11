@@ -123,7 +123,64 @@ def graphHypnoDate(hypnoDf, forDate, deviceName, cutOffTime = time(12,0,0), time
     plt.xlabel("Time")
     plt.show()
 
+from datetime import datetime, date, time, timedelta
+import pytz
+import matplotlib.pyplot as plt
+def graphHypnoandHRDate(hypnoDf, HRdf, forDate, deviceName, cutOffTime = time(12,0,0), timezone = 'US/Arizona'):
+    graphTimeStart = pytz.timezone(timezone).localize(datetime.combine(forDate - timedelta(days=1), cutOffTime))
+    graphTimeEnd = graphTimeStart + timedelta(days=1)
+    hypnoDfForDay = hypnoDf[(hypnoDf['startDate'] < graphTimeEnd) &
+                            (hypnoDf['endDate'] > graphTimeStart)]
 
+
+    #prepping hypno
+    hypnoValues = []
+    hypnoTimes = []
+    for rowIndex in range(len(hypnoDfForDay)):
+        hypnoTimes.append(hypnoDfForDay.iloc[rowIndex]['startDate'])
+        hypnoValues.append(hypnoDfForDay.iloc[rowIndex]['value'])
+        hypnoTimes.append(hypnoDfForDay.iloc[rowIndex]['endDate'])
+        hypnoValues.append(hypnoDfForDay.iloc[rowIndex]['value'])
+    
+    # plotting Hypno
+    fig, ax = plt.subplots(figsize=(16.0, 4.0))
+
+    plt.gca().set_title("Sleep Stages and HR for " + deviceName + " for " + str(forDate))
+    plt.gca().set_ylim([-1.3,3.3])
+    plt.gca().set_xlim([graphTimeStart, graphTimeEnd])
+    plt.ylabel("Sleep Stage")
+    plt.xlabel("Time")
+
+    legend1 = ax.plot(hypnoTimes, hypnoValues, label=deviceName, alpha=1, linewidth=1, color='b')
+    legend2 = [
+        ax.axhline(y = -1, color = 'k', linestyle = ':', linewidth=.7, label = "No Data"),
+        ax.axhline(y = 0, color = 'c', linestyle = ':', linewidth=.7, label = "Awake"),
+        ax.axhline(y = 1, color = 'm', linestyle = ':', linewidth=.7, label = "Light"),
+        ax.axhline(y = 2, color = 'r', linestyle = ':', linewidth=.7, label = "Deep"),
+        ax.axhline(y = 3, color = 'b', linestyle = ':', linewidth=.7, label = "REM") 
+    ]
+    legendToAdd = ax.legend(loc="upper left", handles=legend1)
+    plt.legend(loc="upper right", handles=legend2[::-1])
+    ax.add_artist(legendToAdd)
+
+    # prepping HR
+    HRdf['sampleDT'] = pd.to_datetime(HRdf.index)
+    HRDfForDay = HRdf[(HRdf['sampleDT'] < graphTimeEnd) &
+                      (HRdf['sampleDT'] > graphTimeStart)]
+
+    HRTimes = [HRDfForDay.iloc[rowIndex]['sampleDT'] for rowIndex in range(len(HRDfForDay))]
+    HRValues = [HRDfForDay.iloc[rowIndex]['value'] for rowIndex in range(len(HRDfForDay))]
+    
+    # plotting HR
+    ax2 = ax.twinx()
+    ax2.set_ylim([30,210])
+    ax2.set_ylabel('Heart Rate', color='r') 
+    ax2.plot(HRTimes, HRValues, color='r', linewidth=.7)
+
+    xFormatter = plt.matplotlib.dates.DateFormatter('%H:%M', tz=pytz.timezone(timezone))
+    plt.gca().xaxis.set_major_formatter(xFormatter)
+
+    plt.show()
 
 
 
