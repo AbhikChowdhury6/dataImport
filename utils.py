@@ -67,7 +67,7 @@ def regroupHypno(hypnoDF, includedTypes):
     dfToReturn['endDate'] = hypnoDF['endDate_y']
     dfToReturn['startDate'] = hypnoDF['startDate_y']
     dfToReturn['value'] = hypnoDF["isInTypes"]
-    dfToReturn['durationInMin'] = (dfToReturn['endDate'] - dfToReturn['startDate']).astype('timedelta64[m]')
+    dfToReturn['durationInMin'] = (dfToReturn['endDate'] - dfToReturn['startDate']).dt.total_seconds()/60
     #print(dfToReturn.drop_duplicates().head(5))
     return dfToReturn.drop_duplicates()
 
