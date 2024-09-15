@@ -23,6 +23,44 @@ def getWorkingHRDfParquet(deviceName):
 
     return pd.DataFrame(dfSoFar['value'])
 
+import math
+def writeWorkingHRDfParquet(deviceName, HRDf):
+    # Get the size of the file in bytes
+    workingDataHRPath = workingDataPath + deviceName + "/hr/"
+    HRDf.to_parquet(workingDataHRPath + 'compressionTest.parquet.gzip',
+              compression='gzip') 
+    file_size = os.path.getsize(workingDataHRPath + 'compressionTest.parquet.gzip')
+    os.remove(workingDataHRPath + 'compressionTest.parquet.gzip')
+    numFiles = math.ceil(file_size / (1024 * 1024 * 5))
+    rows_per_file = int(len(HRDf)/numFiles)
+    print(f"the file size of all the data is about {file_size // (1024 * 1024)} MB")
+    print(f"the total number of rows in the file is {len(HRDf)}")
+    print(f"splitting into {numFiles} number of about 5MB files with {rows_per_file} rows per file")
+
+
+    for fileNumber in range(numFiles + 1):
+        startRow = fileNumber * rows_per_file
+        if fileNumber == numFiles:
+            endRow = len(HRDf) - 1
+        else:
+            endRow = ((fileNumber + 1) * rows_per_file) - 1
+
+        print(f"saving rows {startRow} to {endRow}")
+        print(HRDf.iloc[startRow])
+
+        parquetName = HRDf.iloc[startRow].name.strftime('%Y-%m-%dT%H%M%S%z') +\
+                    "_" +\
+                    HRDf.iloc[endRow].name.strftime('%Y-%m-%dT%H%M%S%z') +\
+                    ".parquet.gzip"
+        print(f"to a file named {parquetName}")
+
+        print(pd.to_datetime(HRDf.iloc[startRow].name.strftime('%Y-%m-%dT%H%M%S%z')))
+
+        HRDf.iloc[startRow:endRow+1].to_parquet(workingDataHRPath + parquetName,
+                compression='gzip') 
+
+
+
 def writeHypnoDfParquet(deviceName, hypnoDf):
     parquetName = deviceName + "HypnoDf.parquet.gzip"
     hypnoDf.to_parquet(workingDataPath + deviceName + "/sleep/" + parquetName,
