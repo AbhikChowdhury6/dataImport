@@ -9,6 +9,136 @@ repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("data
 workingDataPath = repoPath + "workingData/"
 exportsDataPath = repoPath + 'dataExports/'
 
+# returns a list of [[startTimestamp, endTimestamp], ...] 
+# for every group with samples always less than maxDelta apart
+# and at least coveres minGroupTime
+def getHRGroups(series, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
+    # add a column that is the time to next reading
+    timesSeries = pd.Series(series.index)
+    betweenMesures = ((timesSeries.shift(-1) - timesSeries)).dt.total_seconds()
+    timeToNextDF = pd.DataFrame(timesSeries)
+    timeToNextDF["timeToNextReading"]  =  betweenMesures
+    # print(timeToNextDF.head(2))
+
+    #filter out time to next reading that are too high
+    ttnrGreaterThanThresh = timeToNextDF[timeToNextDF["timeToNextReading"] < maxDelta]
+    # print(ttnrGreaterThanThresh.head(2))
+
+    #the indexes that have been removed indicate the boundaries of contiguious sections
+    index_diff = ttnrGreaterThanThresh.index.to_series().diff()
+    boundaryIndicators = index_diff[index_diff > 1].index.to_list()
+    # print(boundaryIndicators)
+
+    #add each bounded area to groupBoundaries, if it lasts longer than the minGroup time
+    clusterStartIndex = 0
+    groupBoundaries = []
+    for bii in range(len(boundaryIndicators)): #bii being boundaryIndicatorIndex
+        startTime = timeToNextDF["sampleDT"].iloc[clusterStartIndex]
+        endTime = timeToNextDF["sampleDT"].iloc[boundaryIndicators[bii] - 1]
+        # print( endTime - startTime)
+        if endTime - startTime >= minGroupTime:
+            groupBoundaries.append([startTime, endTime])
+        
+        clusterStartIndex = boundaryIndicators[bii]
+    
+    groupBoundaries.append([timeToNextDF["sampleDT"].iloc[clusterStartIndex], timeToNextDF["sampleDT"].iloc[-1]])
+    
+    return groupBoundaries
+
+def calcIntersection(groups1, groups2):
+    intersectingGroups = []
+
+    groups1i = 0
+    groups2i = 0
+
+    # go though every group in group 1
+    while groups1i < len(groups1) and groups2i < len(groups2):
+        # no intersctions 
+        # if the end time of group 2 is less than the start time of group 1
+        if groups1[groups1i][1] < groups2[groups2i][0]:
+            #no intersection, go to the next group in groups1
+            groups1i += 1
+            continue
+        
+        # if the groups1 group we're looking starts after the end of the group 2 group
+        if groups1[groups1i][0] > groups2[groups2i][1]:
+            #no intersection, and check the next late group
+            groups2i += 1
+            continue
+        
+        # print(f"groups1[{groups1i}]{groups1[groups1i]}")
+        # print(f"groups2[{groups2i}]{groups2[groups2i]}")
+
+        # there is an intersection and it is the latest of the start times
+            # and the earliest of the end times
+        intersectionStart = max(groups1[groups1i][0], groups2[groups2i][0])
+        intersectionEnd = min(groups1[groups1i][1], groups2[groups2i][1])
+        intersectingGroups.append([intersectionStart, intersectionEnd])
+
+        #whichever set had the group with the earliest end time, iterate that one
+        if groups1[groups1i][1] <= groups2[groups2i][1]:
+            groups1i += 1
+        else:
+            groups2i += 1
+        
+    return intersectingGroups
+
+def calcIntersectionOfMultipleGroups(groupsList):
+    intersectingSet = groupsList[0]
+    for groupsi in range(1, len(groupsList)):
+        intersectingSet = calcIntersection(intersectingSet, groupsList[groupsi])
+    return intersectingSet
+
+
+from datetime import datetime, date, time, timedelta
+import pytz
+import matplotlib.pyplot as plt
+def graphMultiHRDate(HRDfs, forDate, deviceNames, cutOffTime = time(12,0,0), timezone = 'US/Arizona'):
+    colorsList = ['c', 'm', 'y', 'r', 'g', 'b', 'k'] #up to 7 HRs at a time
+    graphTimeStart = pytz.timezone(timezone).localize(datetime.combine(forDate - timedelta(days=1), cutOffTime))
+    graphTimeEnd = graphTimeStart + timedelta(days=1)
+
+    fig, ax = plt.subplots(figsize=(16.0, 4.0), dpi=400) # is set this to 2k normally
+
+    plt.gca().set_title("HR for " + ", ".join(deviceNames) + " for " + str(forDate))
+    plt.gca().set_ylim([30,210])
+    plt.gca().set_xlim([graphTimeStart, graphTimeEnd])
+    plt.ylabel("Heart Rate")
+    plt.xlabel("Time")
+    # xFormatter = plt.matplotlib.dates.DateFormatter('%H:%M', tz=pytz.timezone(timezone))
+    # plt.gca().xaxis.set_major_formatter(xFormatter)
+
+    legend1 = []
+    for deviceIndex in range(len(deviceNames)):
+        # prepping HR
+        HRDf = HRDfs[deviceIndex]
+        HRDf["sampleDT"] = HRDf.index
+        HRDfForDay = HRDf[(HRDf.index < graphTimeEnd) &
+                        (HRDf.index > graphTimeStart)]
+        
+        # consider a gontunous section 10 minutes
+        groupsForDevice = getHRGroups(HRDfForDay, 600)
+        print (f"the day has {len(HRDfForDay)} samples for {deviceNames[deviceIndex]} in {len(groupsForDevice)} groups")
+
+        for groupi in range(len(groupsForDevice)):
+            group = groupsForDevice[groupi]
+            groupSamples = HRDfForDay[(HRDfForDay.index > group[0]) & (HRDfForDay.index < group[1])]
+            HRTimes = [groupSamples.iloc[rowIndex]["sampleDT"] for rowIndex in range(len(groupSamples))]
+            HRValues = [groupSamples.iloc[rowIndex]['value'] for rowIndex in range(len(groupSamples))]
+
+            #only add the first group to the legend
+            if groupi == 0:
+                ax.plot(HRTimes, HRValues, label=deviceNames[deviceIndex], alpha=.5, linewidth=1, color=colorsList[deviceIndex])
+            else:
+                ax.plot(HRTimes, HRValues, alpha=.5, linewidth=1, color=colorsList[deviceIndex])
+
+
+    plt.legend(loc="upper left")
+    plt.show()
+
+
+
+
 
 def getWorkingHRDfParquet(deviceName):
     workingDataHRPath = workingDataPath + deviceName + "/hr/"
