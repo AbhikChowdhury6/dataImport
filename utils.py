@@ -21,7 +21,7 @@ def getHRGroups(series, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
     # print(timeToNextDF.head(2))
 
     #filter out time to next reading that are too high
-    ttnrGreaterThanThresh = timeToNextDF[timeToNextDF["timeToNextReading"] < maxDelta]
+    ttnrGreaterThanThresh = timeToNextDF[timeToNextDF["timeToNextReading"] <= maxDelta]
     # print(ttnrGreaterThanThresh.head(2))
 
     #the indexes that have been removed indicate the boundaries of contiguious sections
@@ -294,7 +294,7 @@ def graphHypnoDate(hypnoDf, forDate, deviceName, cutOffTime = time(12,0,0), time
 from datetime import datetime, date, time, timedelta
 import pytz
 import matplotlib.pyplot as plt
-def graphHypnoandHRDate(hypnoDf, HRdf, forDate, deviceName, cutOffTime = time(12,0,0), timezone = 'US/Arizona'):
+def graphHypnoandHRDate(hypnoDf, HRDf, forDate, sleepDeviceName, HRDeviceName, cutOffTime = time(12,0,0), timezone = 'US/Arizona'):
     graphTimeStart = pytz.timezone(timezone).localize(datetime.combine(forDate - timedelta(days=1), cutOffTime))
     graphTimeEnd = graphTimeStart + timedelta(days=1)
     hypnoDfForDay = hypnoDf[(hypnoDf['startDate'] < graphTimeEnd) &
@@ -313,13 +313,13 @@ def graphHypnoandHRDate(hypnoDf, HRdf, forDate, deviceName, cutOffTime = time(12
     # plotting Hypno
     fig, ax = plt.subplots(figsize=(16.0, 4.0))
 
-    plt.gca().set_title("Sleep Stages and HR for " + deviceName + " for " + str(forDate))
+    plt.gca().set_title("Sleep Stages for " + sleepDeviceName + " and HR for " + HRDeviceName + " for " + str(forDate))
     plt.gca().set_ylim([-1.3,3.3])
     plt.gca().set_xlim([graphTimeStart, graphTimeEnd])
     plt.ylabel("Sleep Stage")
     plt.xlabel("Time")
 
-    legend1 = ax.plot(hypnoTimes, hypnoValues, label=deviceName, alpha=1, linewidth=1, color='b')
+    legend1 = [ax.plot(hypnoTimes, hypnoValues, label=sleepDeviceName + " sleep", alpha=1, linewidth=1, color='b')[0]]
     legend2 = [
         ax.axhline(y = -1, color = 'k', linestyle = ':', linewidth=.7, label = "No Data"),
         ax.axhline(y = 0, color = 'c', linestyle = ':', linewidth=.7, label = "Awake"),
@@ -327,23 +327,39 @@ def graphHypnoandHRDate(hypnoDf, HRdf, forDate, deviceName, cutOffTime = time(12
         ax.axhline(y = 2, color = 'r', linestyle = ':', linewidth=.7, label = "Deep"),
         ax.axhline(y = 3, color = 'b', linestyle = ':', linewidth=.7, label = "REM") 
     ]
-    legendToAdd = ax.legend(loc="upper left", handles=legend1)
-    plt.legend(loc="upper right", handles=legend2[::-1])
-    ax.add_artist(legendToAdd)
 
-    # prepping HR
-    HRdf['sampleDT'] = pd.to_datetime(HRdf.index)
-    HRDfForDay = HRdf[(HRdf['sampleDT'] < graphTimeEnd) &
-                      (HRdf['sampleDT'] > graphTimeStart)]
 
-    HRTimes = [HRDfForDay.iloc[rowIndex]['sampleDT'] for rowIndex in range(len(HRDfForDay))]
-    HRValues = [HRDfForDay.iloc[rowIndex]['value'] for rowIndex in range(len(HRDfForDay))]
-    
+
     # plotting HR
     ax2 = ax.twinx()
     ax2.set_ylim([30,210])
     ax2.set_ylabel('Heart Rate', color='r') 
-    ax2.plot(HRTimes, HRValues, color='r', linewidth=.7)
+
+    # prepping HR
+    HRDf["sampleDT"] = HRDf.index
+    HRDfForDay = HRDf[(HRDf.index < graphTimeEnd) &
+                    (HRDf.index > graphTimeStart)]
+    
+    # consider a gontunous section 10 minutes
+    groupsForDevice = getHRGroups(HRDfForDay, 600)
+    print (f"the day has {len(HRDfForDay)} samples for {HRDeviceName} in {len(groupsForDevice)} groups")
+
+    for groupi in range(len(groupsForDevice)):
+        group = groupsForDevice[groupi]
+        groupSamples = HRDfForDay[(HRDfForDay.index > group[0]) & (HRDfForDay.index < group[1])]
+        HRTimes = [groupSamples.iloc[rowIndex]["sampleDT"] for rowIndex in range(len(groupSamples))]
+        HRValues = [groupSamples.iloc[rowIndex]['value'] for rowIndex in range(len(groupSamples))]
+
+        #only add the first group to the legend
+        if groupi == 0:
+            legend1.append(ax2.plot(HRTimes, HRValues, label=HRDeviceName + " HR", alpha=1, linewidth=1, color='r')[0])
+        else:
+            ax2.plot(HRTimes, HRValues, alpha=1, linewidth=1, color='r')
+
+
+    legendToAdd = ax.legend(loc="upper left", handles=legend1)
+    plt.legend(loc="upper right", handles=legend2[::-1])
+    ax.add_artist(legendToAdd)
 
     xFormatter = plt.matplotlib.dates.DateFormatter('%H:%M', tz=pytz.timezone(timezone))
     plt.gca().xaxis.set_major_formatter(xFormatter)
