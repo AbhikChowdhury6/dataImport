@@ -138,9 +138,37 @@ def graphMultiHRDate(HRDfs, forDate, deviceNames, cutOffTime = time(12,0,0), tim
     plt.legend(loc="upper left")
     plt.show()
 
+# query the HRDf for the times during the section
+def getHRsForTimePeriods(times, HRDf):
+    mask = pd.Series([False] * len(HRDf), index=HRDf.index)
+    
+    for start, end in times[['startDate', 'endDate']].values.tolist():
+        # Use binary search to find the positions of the start and end times
+        start_idx = HRDf.index.searchsorted(start, side='left')  # Start index (left inclusive)
+        end_idx = HRDf.index.searchsorted(end, side='right')     # End index (right exclusive)
 
+        # Set the mask to True for the rows between the start and end positions
+        mask.iloc[start_idx:end_idx] = True    
 
+    return HRDf[mask]
 
+def printHRMetrics(HRDf):
+    print(f"mean HR is {HRDf['value'].mean()}")
+    print(f"median HR is {HRDf['value'].median()}")
+    print(f"min HR is {min(HRDf['value'])}")
+    print(f"max HR is {max(HRDf['value'])}")
+    HRDf['value'].plot.hist(bins=60)
+
+def plot2HRGroups(HRDf1, HRDf2, name1, name2):
+    bins = [x for x in range(30,221, (220-30)//40)]
+    ax = HRDf1.value.plot.hist(bins=bins, xlim=(30,200), alpha=0.5, label=name1)
+    ax.hist(HRDf2.value, bins=bins, alpha=0.5, color="g", label=name2)
+    ax.set_xlabel("BPM")
+    ax.set_title("Comparison between " + name1 + " and " + name2)
+    ax.axvline(HRDf1.value.mean(), color='b', linestyle='dashed', linewidth=1)
+    ax.axvline(HRDf2.value.mean(), color='darkgreen', linestyle='dashed', linewidth=1)
+    ax.legend(loc='upper right') 
+    ax.set_xlim(30,220)
 
 def getWorkingHRDfParquet(deviceName):
     workingDataHRPath = workingDataPath + deviceName + "/hr/"
