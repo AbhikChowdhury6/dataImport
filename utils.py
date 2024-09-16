@@ -13,6 +13,8 @@ exportsDataPath = repoPath + 'dataExports/'
 # for every group with samples always less than maxDelta apart
 # and at least coveres minGroupTime
 def getHRGroups(series, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
+    if len(series) == 0:
+        return []
     # add a column that is the time to next reading
     timesSeries = pd.Series(series.index)
     betweenMesures = ((timesSeries.shift(-1) - timesSeries)).dt.total_seconds()
