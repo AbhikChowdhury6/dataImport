@@ -195,11 +195,13 @@ def writeWorkingHRDfParquet(deviceName, HRDf):
     rows_per_file = int(len(HRDf)/numFiles)
     print(f"the file size of all the data is about {file_size // (1024 * 1024)} MB")
     print(f"the total number of rows in the file is {len(HRDf)}")
-    print(f"splitting into {numFiles} number of about 5MB files with {rows_per_file} rows per file")
+    print(f"splitting into {numFiles} files of about 5MB files with {rows_per_file} rows per file")
 
 
     for fileNumber in range(numFiles + 1):
         startRow = fileNumber * rows_per_file
+        if startRow > len(HRDf) - 1:
+            continue
         if fileNumber == numFiles:
             endRow = len(HRDf) - 1
         else:
