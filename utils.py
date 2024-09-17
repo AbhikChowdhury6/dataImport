@@ -159,12 +159,12 @@ def printHRMetrics(HRDf):
     print(f"max HR is {max(HRDf['value'])}")
     HRDf['value'].plot.hist(bins=60)
 
-def plot2HRGroups(HRDf1, HRDf2, name1, name2):
+def plot2HRHistDensities(HRDf1, HRDf2, name1, name2):
     bins = [x for x in range(30,221, (220-30)//40)]
-    ax = HRDf1.value.plot.hist(bins=bins, xlim=(30,200), alpha=0.5, label=name1)
-    ax.hist(HRDf2.value, bins=bins, alpha=0.5, color="g", label=name2)
+    ax = HRDf1.value.plot.hist(bins=bins, xlim=(30,200), alpha=0.5, label=name1, density=True)
+    ax.hist(HRDf2.value, bins=bins, alpha=0.5, color="g", label=name2, density=True)
     ax.set_xlabel("BPM")
-    ax.set_title("Comparison between " + name1 + " and " + name2)
+    ax.set_title("Comparison between " + name1 + " and " + name2 + " probability densities")
     ax.axvline(HRDf1.value.mean(), color='b', linestyle='dashed', linewidth=1)
     ax.axvline(HRDf2.value.mean(), color='darkgreen', linestyle='dashed', linewidth=1)
     ax.legend(loc='upper right') 
