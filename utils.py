@@ -49,9 +49,6 @@ def calcIntersection(groups1, groups2):
             #no intersection, and check the next late group
             groups2i += 1
             continue
-        
-        # print(f"groups1[{groups1i}]{groups1[groups1i]}")
-        # print(f"groups2[{groups2i}]{groups2[groups2i]}")
 
         # there is an intersection and it is the latest of the start times
             # and the earliest of the end times
@@ -73,6 +70,25 @@ def calcIntersectionOfMultipleGroups(groupsList):
         intersectingSet = calcIntersection(intersectingSet, groupsList[groupsi])
     return intersectingSet
 
+# handy for debugging groups
+def makeHRGroupsLikeHypno(hrGroups):
+    data = [[group[0], group[1], 1] for group in hrGroups]
+    #print(data)
+    # add in the no data segments
+    filledRecords = []
+    # for every row except the last
+    for ri in range(len(data)-1):
+        filledRecords.append(data[ri])
+        # if there is a gap between this rows end date and the next rows start date
+        if data[ri][1] < data[ri+1][0]:
+            filledRecords.append([
+                data[ri][1],
+                data[ri+1][0],
+                -1
+            ])
+    filledRecords.append(data[-1])
+    ColumnNames = ["startDate", "endDate", "value"]
+    return pd.DataFrame(columns=ColumnNames, data=filledRecords)
 
 from datetime import datetime, date, time, timedelta
 import pytz
