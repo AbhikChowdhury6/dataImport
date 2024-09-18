@@ -13,39 +13,21 @@ exportsDataPath = repoPath + 'dataExports/'
 # for every group with samples always less than maxDelta apart
 # and at least coveres minGroupTime
 def getHRGroups(series, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
-    if len(series) == 0:
-        return []
-    # add a column that is the time to next reading
-    timesSeries = pd.Series(series.index)
-    betweenMesures = ((timesSeries.shift(-1) - timesSeries)).dt.total_seconds()
-    timeToNextDF = pd.DataFrame(timesSeries)
-    timeToNextDF["timeToNextReading"]  =  betweenMesures
-    # print(timeToNextDF.head(2))
-
-    #filter out time to next reading that are too high
-    ttnrGreaterThanThresh = timeToNextDF[timeToNextDF["timeToNextReading"] <= maxDelta]
-    # print(ttnrGreaterThanThresh.head(2))
-
-    #the indexes that have been removed indicate the boundaries of contiguious sections
-    index_diff = ttnrGreaterThanThresh.index.to_series().diff()
-    boundaryIndicators = index_diff[index_diff > 1].index.to_list()
-    # print(boundaryIndicators)
-
-    #add each bounded area to groupBoundaries, if it lasts longer than the minGroup time
-    clusterStartIndex = 0
-    groupBoundaries = []
-    for bii in range(len(boundaryIndicators)): #bii being boundaryIndicatorIndex
-        startTime = timeToNextDF["sampleDT"].iloc[clusterStartIndex]
-        endTime = timeToNextDF["sampleDT"].iloc[boundaryIndicators[bii] - 1]
-        # print( endTime - startTime)
-        if endTime - startTime >= minGroupTime:
-            groupBoundaries.append([startTime, endTime])
-        
-        clusterStartIndex = boundaryIndicators[bii]
+    time_diffs = series.index.to_series().diff()
     
-    groupBoundaries.append([timeToNextDF["sampleDT"].iloc[clusterStartIndex], timeToNextDF["sampleDT"].iloc[-1]])
+    # Mark where the time difference exceeds the threshold (group break points)
+    group_breaks = time_diffs.dt.total_seconds() > maxDelta
     
-    return groupBoundaries
+    # Assign group labels by cumulatively summing the group breaks
+    group_labels = group_breaks.cumsum()
+
+    # Group by the labels and extract the start and end times for each group
+    grouped = series.groupby(group_labels)
+
+    # Create a list of (start_time, end_time) for each group
+    groups = [(group.index[0], group.index[-1]) for _, group in grouped]
+
+    return [group for group in groups if group[1] - group[0] > minGroupTime]
 
 def calcIntersection(groups1, groups2):
     intersectingGroups = []
@@ -173,14 +155,12 @@ def plot2HRHistDensities(HRDf1, HRDf2, name1, name2):
 def getWorkingHRDfParquet(deviceName):
     workingDataHRPath = workingDataPath + deviceName + "/hr/"
     workingDataFiles = os.listdir(workingDataHRPath)
-    columnNames = pd.read_parquet(workingDataHRPath + workingDataFiles[0]).columns.to_list()
-    columnNames.insert(0,'sampleDT')
-    dfSoFar = pd.DataFrame(columns=columnNames).set_index("sampleDT")
-
-    for dataFileName in workingDataFiles:
-        dfSoFar = pd.concat([dfSoFar, pd.read_parquet(workingDataHRPath + dataFileName)]) 
+    
+    dfSoFar = pd.read_parquet(workingDataHRPath + workingDataFiles[0])
+    for dataFileNameIndex in range(1, len(workingDataFiles)):
+        dfSoFar = pd.concat([dfSoFar, pd.read_parquet(workingDataHRPath + workingDataFiles[dataFileNameIndex])]) 
+    
     dfSoFar = dfSoFar[~dfSoFar.index.duplicated(keep="first")].sort_index()
-
     return pd.DataFrame(dfSoFar['value'])
 
 import math
@@ -191,6 +171,10 @@ def writeWorkingHRDfParquet(deviceName, HRDf):
               compression='gzip') 
     file_size = os.path.getsize(workingDataHRPath + 'compressionTest.parquet.gzip')
     os.remove(workingDataHRPath + 'compressionTest.parquet.gzip')
+
+    #remove exisiting files
+    [os.remove(workingDataHRPath + file) for file in os.listdir(workingDataHRPath)]
+
     numFiles = math.ceil(file_size / (1024 * 1024 * 5))
     rows_per_file = int(len(HRDf)/numFiles)
     print(f"the file size of all the data is about {file_size // (1024 * 1024)} MB")
