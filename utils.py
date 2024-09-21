@@ -90,6 +90,42 @@ def makeHRGroupsLikeHypno(hrGroups):
     ColumnNames = ["startDate", "endDate", "value"]
     return pd.DataFrame(columns=ColumnNames, data=filledRecords)
 
+def secBySecHRGraph(HRDfs, group, deviceNames, withpoints):
+    colorsList = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
+    graphTimeStart = group[0]
+    graphTimeEnd = group[1]
+
+    plotWidth = (graphTimeEnd - graphTimeStart).total_seconds() / 60
+    fig, ax = plt.subplots(figsize=(16, 4.0)) # is set this to 2k normally
+    
+    plt.gca().set_title("HR for " + ", ".join(deviceNames) + " for " + str(graphTimeStart))
+    plt.gca().set_ylim([30,210])
+    plt.gca().set_xlim([graphTimeStart, graphTimeEnd])
+    plt.xticks(rotation=45)
+    plt.ylabel("Heart Rate")
+    plt.xlabel("Time")
+    # xFormatter = plt.matplotlib.dates.DateFormatter('%H:%M', tz=pytz.timezone(timezone))
+    # plt.gca().xaxis.set_major_formatter(xFormatter)
+
+    legend1 = []
+    for deviceIndex in range(len(deviceNames)):
+        # prepping HR
+        HRDf = HRDfs[deviceIndex]
+        HRDf["sampleDT"] = HRDf.index
+        HRTimes = [HRDf.iloc[rowIndex]["sampleDT"] for rowIndex in range(len(HRDf))]
+        HRValues = [HRDf.iloc[rowIndex]['value'] for rowIndex in range(len(HRDf))]
+        
+        # ax.plot(HRTimes, HRValues, alpha=.5, linewidth=5, color='white')
+
+        ax.plot(HRTimes, HRValues, label=deviceNames[deviceIndex], alpha=.5, linewidth=5, color=colorsList[deviceIndex])
+        if withpoints: ax.plot(HRTimes, HRValues, alpha=.3, color=colorsList[deviceIndex], marker='.', markersize=10)
+
+
+    plt.legend(loc="upper left")
+    plt.style.use('default') 
+
+    plt.show()
+
 from datetime import datetime, date, time, timedelta
 import pytz
 import matplotlib.pyplot as plt
