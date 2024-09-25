@@ -21,13 +21,16 @@ def getHRGroups(series, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
     # Assign group labels by cumulatively summing the group breaks
     group_labels = group_breaks.cumsum()
 
-    # Group by the labels and extract the start and end times for each group
-    grouped = series.groupby(group_labels)
+    # Create a dataframe of (start_time, end_time) for each group
+    group_labels_times = pd.Series(group_labels.index, index=group_labels.values)
+    gStarts = group_labels_times[~group_labels_times.index.duplicated(keep="first")]
+    gEnds = group_labels_times[~group_labels_times.index.duplicated(keep="last")]
+    allGroupsDf = pd.DataFrame({'startTime':gStarts, 'endTime': gEnds})
 
-    # Create a list of (start_time, end_time) for each group
-    groups = [(group.index[0], group.index[-1]) for _, group in grouped]
+    #check min group time
+    groupsDf = allGroupsDf[allGroupsDf['endTime'] - allGroupsDf['startTime'] > minGroupTime]
 
-    return [group for group in groups if group[1] - group[0] > minGroupTime]
+    return groupsDf.values.tolist()
 
 def calcIntersection(groups1, groups2):
     intersectingGroups = []
