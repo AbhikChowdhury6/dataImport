@@ -9,11 +9,30 @@ repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("data
 workingDataPath = repoPath + "workingData/"
 exportsDataPath = repoPath + 'dataExports/'
 
-# returns a list of [[startTimestamp, endTimestamp], ...] 
+def infillIntervals(intervals):
+    # Shift columns to compare consecutive rows
+    next_start = intervals['startDate'].shift(-1)
+
+    # Find rows where there is a gap
+    gap_mask = next_start > intervals['endDate']
+
+    # Create a DataFrame for the gaps
+    gap_df = pd.DataFrame({
+        'startDate': df.loc[gap_mask, 'endDate'],
+        'endDate': next_start[gap_mask],
+        'value': -1  # indicator for gaps
+    })
+
+    # Concatenate the original DataFrame and the gap DataFrame
+    combined_df = pd.concat([df, gap_df])
+
+    return combined_df.sort_values('startDate').reset_index(drop=True)
+
+# returns an interval DataFrame [startDate, endDate, value]
 # for every group with samples always less than maxDelta apart
 # and at least coveres minGroupTime
-def getHRGroups(series, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
-    time_diffs = series.index.to_series().diff()
+def getHRIntervals(HRDf, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
+    time_diffs = HRDf.index.to_series().diff()
     
     # Mark where the time difference exceeds the threshold (group break points)
     group_breaks = time_diffs.dt.total_seconds() > maxDelta
@@ -29,69 +48,63 @@ def getHRGroups(series, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
 
     #check min group time
     groupsDf = allGroupsDf[allGroupsDf['endTime'] - allGroupsDf['startTime'] > minGroupTime]
+    
+    groupsDf['value'] = 1
+    return groupsDf
 
-    return groupsDf.values.tolist()
 
-def calcIntersection(groups1, groups2):
-    intersectingGroups = []
+def calcSingleIntersection(intervals1, intervals2):
+    intersectingIntervals = []
 
-    groups1i = 0
-    groups2i = 0
+    intervals1i = 0
+    intervals2i = 0
 
     # go though every group in group 1
-    while groups1i < len(groups1) and groups2i < len(groups2):
+    while intervals1i < len(intervals1) and intervals2i < len(intervals2):
         # no intersctions 
         # if the end time of group 2 is less than the start time of group 1
-        if groups1[groups1i][1] < groups2[groups2i][0]:
-            #no intersection, go to the next group in groups1
-            groups1i += 1
+        if intervals1[intervals1][1] < intervals2[intervals2i][0]:
+            #no intersection, go to the next group in intervals1
+            intervals1 += 1
             continue
         
-        # if the groups1 group we're looking starts after the end of the group 2 group
-        if groups1[groups1i][0] > groups2[groups2i][1]:
+        # if the intervals1 group we're looking starts after the end of the group 2 group
+        if intervals1[intervals1][0] > intervals2[intervals2i][1]:
             #no intersection, and check the next late group
-            groups2i += 1
+            intervals2i += 1
             continue
 
         # there is an intersection and it is the latest of the start times
             # and the earliest of the end times
-        intersectionStart = max(groups1[groups1i][0], groups2[groups2i][0])
-        intersectionEnd = min(groups1[groups1i][1], groups2[groups2i][1])
-        intersectingGroups.append([intersectionStart, intersectionEnd])
+        intersectionStart = max(intervals1[intervals1i][0], intervals2[intervals2i][0])
+        intersectionEnd = min(intervals1[intervals1i][1], intervals2[intervals2i][1])
+        intersectingIntervals.append([intersectionStart, intersectionEnd])
 
-        #whichever set had the group with the earliest end time, iterate that one
-        if groups1[groups1i][1] <= groups2[groups2i][1]:
-            groups1i += 1
+        #whichever set had the interval with the earliest end time, iterate that one
+        if intervals1[intervals1i][1] <= intervals2[intervals2i][1]:
+            intervals1i += 1
         else:
-            groups2i += 1
+            intervals2i += 1
         
-    return intersectingGroups
+    return intersectingIntervals
 
-def calcIntersectionOfMultipleGroups(groupsList):
-    intersectingSet = groupsList[0]
+
+
+
+
+def intervalOverlap(groupsList):
+    intersectingIntervalsList = groupsList[0][groupsList[0].value == 1][['startDate', 'endDate']].values()
     for groupsi in range(1, len(groupsList)):
-        intersectingSet = calcIntersection(intersectingSet, groupsList[groupsi])
-    return intersectingSet
-
-# handy for debugging groups
-def makeHRGroupsLikeHypno(hrGroups):
-    data = [[group[0], group[1], 1] for group in hrGroups]
-    #print(data)
-    # add in the no data segments
-    filledRecords = []
-    # for every row except the last
-    for ri in range(len(data)-1):
-        filledRecords.append(data[ri])
-        # if there is a gap between this rows end date and the next rows start date
-        if data[ri][1] < data[ri+1][0]:
-            filledRecords.append([
-                data[ri][1],
-                data[ri+1][0],
-                -1
-            ])
-    filledRecords.append(data[-1])
+        listForm = groupsList[groupsi][groupsList[groupsi].value == 1][['startDate', 'endDate']].values()
+        intersectingIntervalsList = calcSingleIntersection(intersectingIntervalsList, groupsList[groupsi])
+    
     ColumnNames = ["startDate", "endDate", "value"]
-    return pd.DataFrame(columns=ColumnNames, data=filledRecords)
+    dfVals = [[interval[0], interval[1], 1] for interval in intersectingIntervalsList]
+    intersectingIntervals = pd.DataFrame(columns=ColumnNames, data=dfVals)
+    return infillIntervals(intersectingIntervals)
+
+
+
 
 def secBySecHRGraph(HRDfs, group, deviceNames, withpoints):
     colorsList = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
@@ -160,7 +173,7 @@ def graphMultiHRDate(HRDfs, forDate, deviceNames, cutOffTime = time(12,0,0), tim
         print (f"the day has {len(HRDfForDay)} samples for {deviceNames[deviceIndex]} in {len(groupsForDevice)} groups")
 
         for groupi in range(len(groupsForDevice)):
-            group = groupsForDevice[groupi]
+            group = groupsForDevice[groupi].values()
             groupSamples = HRDfForDay[(HRDfForDay.index > group[0]) & (HRDfForDay.index < group[1])]
             HRTimes = [groupSamples.iloc[rowIndex]["sampleDT"] for rowIndex in range(len(groupSamples))]
             HRValues = [groupSamples.iloc[rowIndex]['value'] for rowIndex in range(len(groupSamples))]
@@ -176,10 +189,10 @@ def graphMultiHRDate(HRDfs, forDate, deviceNames, cutOffTime = time(12,0,0), tim
     plt.show()
 
 # query the HRDf for the times during the section
-def getHRsForTimePeriods(times, HRDf):
+def getHRsForTimePeriods(intervals, HRDf):
     mask = pd.Series([False] * len(HRDf), index=HRDf.index)
     
-    for start, end in times[['startDate', 'endDate']].values.tolist():
+    for start, end in intervals[['startDate', 'endDate']].values.tolist():
         # Use binary search to find the positions of the start and end times
         start_idx = HRDf.index.searchsorted(start, side='left')  # Start index (left inclusive)
         end_idx = HRDf.index.searchsorted(end, side='right')     # End index (right exclusive)
@@ -211,54 +224,99 @@ def getWorkingHRDfParquet(deviceName):
     workingDataHRPath = workingDataPath + deviceName + "/hr/"
     workingDataFiles = os.listdir(workingDataHRPath)
     
-    dfSoFar = pd.read_parquet(workingDataHRPath + workingDataFiles[0])
-    for dataFileNameIndex in range(1, len(workingDataFiles)):
-        dfSoFar = pd.concat([dfSoFar, pd.read_parquet(workingDataHRPath + workingDataFiles[dataFileNameIndex])]) 
-    
-    dfSoFar = dfSoFar[~dfSoFar.index.duplicated(keep="first")].sort_index()
-    return pd.DataFrame(dfSoFar['value'])
+    if len(workingDataFiles) > 0:
+        dfSoFar = pd.read_parquet(workingDataHRPath + workingDataFiles[0])
+        for dataFileNameIndex in range(1, len(workingDataFiles)):
+            dfSoFar = pd.concat([dfSoFar, pd.read_parquet(workingDataHRPath + workingDataFiles[dataFileNameIndex])]) 
+        dfSoFar = dfSoFar[~dfSoFar.index.duplicated(keep="first")].sort_index()
+        return pd.DataFrame(dfSoFar['value'])
+    print('no files found')
+    return []
 
-import math
-def writeWorkingHRDfParquet(deviceName, HRDf):
-    # Get the size of the file in bytes
-    workingDataHRPath = workingDataPath + deviceName + "/hr/"
-    HRDf.to_parquet(workingDataHRPath + 'compressionTest.parquet.gzip',
-              compression='gzip') 
+
+def getRowsPerFile(HRDf, targetFileSize = 1024):
+    HRDf.iloc[:1_000_000].to_parquet(workingDataPath + 'compressionTest.parquet.gzip',
+                compression='gzip')
     file_size = os.path.getsize(workingDataHRPath + 'compressionTest.parquet.gzip')
     os.remove(workingDataHRPath + 'compressionTest.parquet.gzip')
+    return 1_000_000 // (file_size / targetFileSize)
 
-    #remove exisiting files
-    [os.remove(workingDataHRPath + file) for file in os.listdir(workingDataHRPath)]
 
-    numFiles = math.ceil(file_size / (1024 * 1024 * 5))
+def splitFile():
+    # check the number of rows in the range of the current entry
+    # if greater than the double
+        #delete the original file
+        #create new 1MB max files from the beginning of the desired period 
+    pass
+
+
+def writeToExistingFiles():
+    #check if there's any data before the first file
+    #if there's none then keep going
+
+    for file in workingDataFiles:
+
+
+import math
+def writeWorkingHRDfParquet(deviceName, HRDf, clearFiles = False):
+    # I would like to write this in a way that
+        #if there is new data in one of the intervals
+        #that file grows, untill it hits 2MB expected then it splits
+    rowsPerFile = getRowsPerFile(HRDf)
+    workingDataHRPath = workingDataPath + deviceName + "/hr/"
+    if clearFiles:
+        #remove exisiting files
+        [os.remove(workingDataHRPath + file) for file in os.listdir(workingDataHRPath)]
+
+    workingDataFiles = os.listdir(workingDataHRPath)
+    if len(workingDataFiles) == 0:
+        print('no files found makinf new ones')
+
+        # Get the size of the file in bytes
+        numFiles = math.ceil(len(HRDf) / rowsPerFile)
+
+        for fileNumber in range(numFiles + 1):
+            startRow = fileNumber * rows_per_file
+            if startRow > len(HRDf) - 1:
+                continue
+            if fileNumber == numFiles:
+                endRow = len(HRDf) - 1
+            else:
+                endRow = ((fileNumber + 1) * rows_per_file) - 1
+
+            print(f"saving rows {startRow} to {endRow}")
+
+            parquetName = HRDf.iloc[startRow].name.strftime('%Y-%m-%dT%H%M%S%z') +\
+                        "_" +\
+                        HRDf.iloc[endRow].name.strftime('%Y-%m-%dT%H%M%S%z') +\
+                        ".parquet.gzip"
+            print(f"to a file named {parquetName}")
+
+            HRDf.iloc[startRow:endRow+1].to_parquet(workingDataHRPath + parquetName,
+                    compression='gzip') 
+        
+        else:
+            
+            #read in the file names and get the intervals
+
+
+    #if available read the first file lines and size and use that to generate the
+
+    #if there are any new values before the start or after the end then the file name will need to be updated
+    #start with the existing filenames and only update for the above or for a split
+
+
+
+
+
+    numFiles = math.ceil(file_size / (1024 * 1024 * 1))
     rows_per_file = int(len(HRDf)/numFiles)
     print(f"the file size of all the data is about {file_size // (1024 * 1024)} MB")
     print(f"the total number of rows in the file is {len(HRDf)}")
     print(f"splitting into {numFiles} files of about 5MB files with {rows_per_file} rows per file")
 
 
-    for fileNumber in range(numFiles + 1):
-        startRow = fileNumber * rows_per_file
-        if startRow > len(HRDf) - 1:
-            continue
-        if fileNumber == numFiles:
-            endRow = len(HRDf) - 1
-        else:
-            endRow = ((fileNumber + 1) * rows_per_file) - 1
 
-        print(f"saving rows {startRow} to {endRow}")
-        print(HRDf.iloc[startRow])
-
-        parquetName = HRDf.iloc[startRow].name.strftime('%Y-%m-%dT%H%M%S%z') +\
-                    "_" +\
-                    HRDf.iloc[endRow].name.strftime('%Y-%m-%dT%H%M%S%z') +\
-                    ".parquet.gzip"
-        print(f"to a file named {parquetName}")
-
-        print(pd.to_datetime(HRDf.iloc[startRow].name.strftime('%Y-%m-%dT%H%M%S%z')))
-
-        HRDf.iloc[startRow:endRow+1].to_parquet(workingDataHRPath + parquetName,
-                compression='gzip') 
 
 
 
