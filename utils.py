@@ -261,7 +261,7 @@ def writeHRDfFile(HRDf, startRow, endRow, workingDataHRPath):
 def writeFreshHRFiles(HRDf, rows_per_file, workingDataHRPath):
     # Get the size of the file in bytes
     numFiles = math.ceil(len(HRDf) / rows_per_file)
-    print(f'saving to {numFiles} number of files')
+    print(f'saving to {numFiles} files')
     for fileNumber in range(numFiles + 1):
         startRow = fileNumber * rows_per_file
         if startRow > len(HRDf) - 1:
@@ -275,18 +275,28 @@ def writeFreshHRFiles(HRDf, rows_per_file, workingDataHRPath):
 
 def writeToExistingFiles(HRDf, rows_per_file, workingDataHRPath):
     #read in the file names and get the intervals
-    fileNames = os.listdir(workingDataHRPath)
+    fileNames = sorted(os.listdir(workingDataHRPath))
+    [os.remove(workingDataHRPath + file) for file in fileNames]
     for fnum, fileName in enumerate(fileNames):
+        print(fileName)
+        print(fnum)
         startTime = pd.to_datetime(fileName.replace('.', '_').split('_')[0])
         startRow = HRDf.index.searchsorted(startTime, side='right')
         if fnum == 0: startRow = 0
+        if startRow > len(HRDf)-1: startRow = len(HRDf)-1
+        print(f"the start row and parsed time is {startRow} {startTime}")
+        print(f"the time of the start row is {HRDf.index[startRow]}")
 
         endTime = pd.to_datetime(fileName.replace('.', '_').split('_')[1])
         endRow = HRDf.index.searchsorted(endTime, side='right')
         if fnum == len(fileNames)-1: endRow = len(HRDf)-1
+        if endRow > len(HRDf)-1: endRow = len(HRDf)-1
+        print(f"the end row and  parsed  time is {endRow} {endTime}")
+        print(f"the time of the end row is {HRDf.index[endRow]}")
 
         rows_remaining = endRow - startRow
         while rows_remaining > 2 * rows_per_file:
+            print(f'{rows_remaining} is too many rows writing {startRow} to {(endRow - rows_remaining) + rows_per_file}')
             writeHRDfFile(HRDf, startRow, (endRow - rows_remaining) + rows_per_file, workingDataHRPath)
             rows_remaining -= rows_per_file
             startRow += rows_per_file
@@ -294,22 +304,25 @@ def writeToExistingFiles(HRDf, rows_per_file, workingDataHRPath):
         writeHRDfFile(HRDf, startRow, endRow, workingDataHRPath)
 
 import math
-def writeWorkingHRDfParquet(deviceName, HRDf, clearFiles = False):
+def writeWorkingHRDfParquet(deviceName, HRDf, clearFiles = True):
     # I would like to write this in a way that
         #if there is new data in one of the intervals
         #that file grows, untill it hits 2MB expected then it splits
     rows_per_file = getRowsPerFile(HRDf)
     workingDataHRPath = workingDataPath + deviceName + "/hr/"
-    if clearFiles:
-        [os.remove(workingDataHRPath + file) for file in os.listdir(workingDataHRPath)]
+    ogFiles = os.listdir(workingDataHRPath)
 
     workingDataFiles = os.listdir(workingDataHRPath)
     if len(workingDataFiles) == 0:
+        if clearFiles:
+            print("Clearing files")
+            [os.remove(workingDataHRPath + file) for file in ogFiles]
         print('no files found making new ones')
         writeFreshHRFiles(HRDf, rows_per_file, workingDataHRPath)
 
     else:
         writeToExistingFiles(HRDf, rows_per_file, workingDataHRPath)
+        
 
 
 
