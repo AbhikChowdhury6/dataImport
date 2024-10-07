@@ -233,99 +233,93 @@ def getWorkingHRDfParquet(deviceName):
     print('no files found')
     return []
 
+import hashlib
+import pickle
 
-def getRowsPerFile(HRDf, targetFileSize = 2 * 1024 * 1024):
-    HRDf.iloc[:1_000_000].to_parquet(workingDataPath + 'compressionTest.parquet.gzip',
-                compression='gzip')
-    file_size = os.path.getsize(workingDataPath + 'compressionTest.parquet.gzip')
-    os.remove(workingDataPath + 'compressionTest.parquet.gzip')
-    rows_per_file = int(1_000_000 // (file_size / targetFileSize))
-    print(f"a million rows took up {file_size / targetFileSize} MB")
-    print(f"putting {rows_per_file} rows per file")
-    return rows_per_file
+# Function to compute a short hash of a Python object
+def short_hash(obj, length=8):
+    # Serialize the object using pickle
+    obj_bytes = pickle.dumps(obj)
+    
+    # Compute MD5 hash of the serialized object
+    hash_obj = hashlib.md5(obj_bytes)
+    
+    # Return the hash truncated to the specified length
+    return hash_obj.hexdigest()[:length]
 
-
-
-def writeHRDfFile(HRDf, startRow, endRow, workingDataHRPath):
-    print(f"saving rows {startRow} to {endRow}")
-
-    parquetName = HRDf.iloc[startRow].name.strftime('%Y-%m-%dT%H%M%S%z') +\
+# this writes a file for a subset of a DF
+def writeHRDfFile(HRDf, workingDataHRPath):
+    sh = short_hash(HRDf)
+    parquetName = HRDf.iloc[0].name.strftime('%Y-%m-%dT%H%M%S%z') +\
                 "_" +\
-                HRDf.iloc[endRow].name.strftime('%Y-%m-%dT%H%M%S%z') +\
-                ".parquet.gzip"
-    print(f"to a file named {parquetName}")
+                HRDf.iloc[-1].name.strftime('%Y-%m-%dT%H%M%S%z') +\
+                "_" + sh + "_" + ".parquet.gzip"
+    print(f"saved to a file named {parquetName}")
 
-    HRDf.iloc[startRow:endRow+1].to_parquet(workingDataHRPath + parquetName,
+    HRDf.to_parquet(workingDataHRPath + parquetName,
             compression='gzip') 
 
-def writeFreshHRFiles(HRDf, rows_per_file, workingDataHRPath):
-    # Get the size of the file in bytes
-    numFiles = math.ceil(len(HRDf) / rows_per_file)
-    print(f'saving to {numFiles} files')
-    for fileNumber in range(numFiles + 1):
-        startRow = fileNumber * rows_per_file
-        if startRow > len(HRDf) - 1:
-            continue
-        if fileNumber == numFiles-1:
-            endRow = len(HRDf) - 1
+#takes in a dataframe you want to save and does it in multiple files
+def saveRows(df, workingDataHRPath, rows_per_file):
+    if len(df) == 0: return
+    startRow = 0
+    endRow = len(df)
+    rows_remaining = endRow - startRow
+    while rows_remaining > 2 * rows_per_file:
+        print(f'{rows_remaining} is too many rows writing {startRow} to {(endRow - rows_remaining) + rows_per_file}')
+        writeHRDfFile(df.iloc[startRow: (endRow - rows_remaining) + rows_per_file + 1], workingDataHRPath)
+        rows_remaining -= rows_per_file
+        startRow += rows_per_file
+    writeHRDfFile(df.iloc[startRow:endRow+1], workingDataHRPath)
+
+def rowsPerFile(Df, targetFileSize, workingDataHRPath, fileName = 'test.parquet.gzip'):
+    if fileName == 'test.parquet.gzip':
+        fileRows = 1_000_000
+        if len(Df) < fileRows: fileRows = len(Df)-1
+        Df.iloc[:fileRows].to_parquet(workingDataHRPath + fileName,
+                        compression='gzip')
+        file_size = os.path.getsize(workingDataHRPath + fileName)
+        os.remove(workingDataHRPath + fileName)
+    else:
+        fileRows = len(pd.read_parquet(workingDataHRPath + fileName))
+        file_size = os.path.getsize(workingDataHRPath + fileName)
+    
+
+    rows_per_file = int(fileRows//(file_size/targetFileSize))
+    return rows_per_file
+
+def writeToExistingHRFiles(HRDf, fileNames, workingDataHRPath, rows_per_file):
+    tzi = HRDf.index[0].tzinfo
+    for fileNum, fileName in enumerate(fileNames):
+        if fileNum == 0:
+            startTime = HRDf.index[0]
         else:
-            endRow = ((fileNumber + 1) * rows_per_file) - 1
-
-        writeHRDfFile(HRDf, startRow, endRow, workingDataHRPath)
-
-def writeToExistingFiles(HRDf, rows_per_file, workingDataHRPath):
-    #read in the file names and get the intervals
-    fileNames = sorted(os.listdir(workingDataHRPath))
-    [os.remove(workingDataHRPath + file) for file in fileNames]
-    for fnum, fileName in enumerate(fileNames):
-        print(fileName)
-        print(fnum)
-        startTime = pd.to_datetime(fileName.replace('.', '_').split('_')[0])
-        startRow = HRDf.index.searchsorted(startTime, side='right')
-        if fnum == 0: startRow = 0
-        if startRow > len(HRDf)-1: startRow = len(HRDf)-1
-        print(f"the start row and parsed time is {startRow} {startTime}")
-        print(f"the time of the start row is {HRDf.index[startRow]}")
-
-        endTime = pd.to_datetime(fileName.replace('.', '_').split('_')[1])
-        endRow = HRDf.index.searchsorted(endTime, side='right')
-        if fnum == len(fileNames)-1: endRow = len(HRDf)-1
-        if endRow > len(HRDf)-1: endRow = len(HRDf)-1
-        print(f"the end row and  parsed  time is {endRow} {endTime}")
-        print(f"the time of the end row is {HRDf.index[endRow]}")
-
-        rows_remaining = endRow - startRow
-        while rows_remaining > 2 * rows_per_file:
-            print(f'{rows_remaining} is too many rows writing {startRow} to {(endRow - rows_remaining) + rows_per_file}')
-            writeHRDfFile(HRDf, startRow, (endRow - rows_remaining) + rows_per_file, workingDataHRPath)
-            rows_remaining -= rows_per_file
-            startRow += rows_per_file
+            startTime = pd.to_datetime(fileName.split('_')[0]).tz_convert(tzi)
         
-        writeHRDfFile(HRDf, startRow, endRow, workingDataHRPath)
+        if len(fileNames) == 1 or fileNum == len(fileNames) - 1:
+            endTime = HRDf.index[-1]
+        else:
+            endTime = pd.to_datetime(fileNames[fileNum + 1].split('_')[0]).tz_convert(tzi)
+        
+        # if the hash doesn't match write a new file
+        if short_hash(HRDf.loc[startTime:endTime]) != fileName.split('_')[2]:
+            print("the hashes don't match")
+            os.remove(workingDataHRPath + fileName)
+            saveRows(HRDf.loc[startTime:endTime], workingDataHRPath, rows_per_file)
+        else:
+            print(f'hashes match for {fileName}')
 
-import math
-def writeWorkingHRDfParquet(deviceName, HRDf, clearFiles = True):
-    # I would like to write this in a way that
-        #if there is new data in one of the intervals
-        #that file grows, untill it hits 2MB expected then it splits
-    rows_per_file = getRowsPerFile(HRDf)
+def writeWorkingHRDfParquet(deviceName, HRDf, clearFiles = True, targetFileSize = 2 * 1024 * 1024):
     workingDataHRPath = workingDataPath + deviceName + "/hr/"
-    ogFiles = os.listdir(workingDataHRPath)
+    fileNames = sorted(os.listdir(workingDataHRPath))
 
-    workingDataFiles = os.listdir(workingDataHRPath)
-    if len(workingDataFiles) == 0:
-        if clearFiles:
-            print("Clearing files")
-            [os.remove(workingDataHRPath + file) for file in ogFiles]
-        print('no files found making new ones')
-        writeFreshHRFiles(HRDf, rows_per_file, workingDataHRPath)
+    if len(fileNames) == 0:
+        rows_per_file = rowsPerFile(HRDf, targetFileSize, workingDataHRPath)
+        saveRows(HRDf, workingDataHRPath, rows_per_file)
 
     else:
-        writeToExistingFiles(HRDf, rows_per_file, workingDataHRPath)
-        
-
-
-
+        rows_per_file = rowsPerFile(HRDf, targetFileSize, workingDataHRPath, fileNames[0])
+        writeToExistingHRFiles(HRDf, fileNames, workingDataHRPath, rows_per_file)
 
 
 def writeHypnoDfParquet(deviceName, hypnoDf):
