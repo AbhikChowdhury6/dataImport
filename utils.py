@@ -11,24 +11,24 @@ exportsDataPath = repoPath + 'dataExports/'
 
 def infillIntervals(intervals):
     # Shift columns to compare consecutive rows
-    next_start = intervals['startDate'].shift(-1)
+    next_start = intervals['startTime'].shift(-1)
 
     # Find rows where there is a gap
-    gap_mask = next_start > intervals['endDate']
+    gap_mask = next_start > intervals['endTime']
 
     # Create a DataFrame for the gaps
     gap_df = pd.DataFrame({
-        'startDate': df.loc[gap_mask, 'endDate'],
-        'endDate': next_start[gap_mask],
+        'startTime': intervals.loc[gap_mask, 'endTime'],
+        'endTime': next_start[gap_mask],
         'value': -1  # indicator for gaps
     })
 
     # Concatenate the original DataFrame and the gap DataFrame
-    combined_df = pd.concat([df, gap_df])
+    combined_df = pd.concat([intervals, gap_df])
 
-    return combined_df.sort_values('startDate').reset_index(drop=True)
+    return combined_df.sort_values('startTime').reset_index(drop=True)
 
-# returns an interval DataFrame [startDate, endDate, value]
+# returns an interval DataFrame [startTime, endTime, value]
 # for every group with samples always less than maxDelta apart
 # and at least coveres minGroupTime
 def getHRIntervals(HRDf, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
@@ -47,13 +47,15 @@ def getHRIntervals(HRDf, maxDelta = 20, minGroupTime = pd.Timedelta(minutes=5)):
     allGroupsDf = pd.DataFrame({'startTime':gStarts, 'endTime': gEnds})
 
     #check min group time
-    groupsDf = allGroupsDf[allGroupsDf['endTime'] - allGroupsDf['startTime'] > minGroupTime]
+    groupsDf = allGroupsDf[allGroupsDf['endTime'] - allGroupsDf['startTime'] > minGroupTime].copy()
     
     groupsDf['value'] = 1
     return groupsDf
 
 
 def calcSingleIntersection(intervals1, intervals2):
+    if len(intervals1) == 0 or len(intervals2) == 0:
+        return []
     intersectingIntervals = []
 
     intervals1i = 0
@@ -63,13 +65,17 @@ def calcSingleIntersection(intervals1, intervals2):
     while intervals1i < len(intervals1) and intervals2i < len(intervals2):
         # no intersctions 
         # if the end time of group 2 is less than the start time of group 1
-        if intervals1[intervals1][1] < intervals2[intervals2i][0]:
+        # print(intervals1i)
+        # print(intervals1[intervals1i])
+        # print(intervals2i)
+        # print(intervals2[intervals2i])
+        if intervals1[intervals1i][1] < intervals2[intervals2i][0]:
             #no intersection, go to the next group in intervals1
-            intervals1 += 1
+            intervals1i += 1
             continue
         
         # if the intervals1 group we're looking starts after the end of the group 2 group
-        if intervals1[intervals1][0] > intervals2[intervals2i][1]:
+        if intervals1[intervals1i][0] > intervals2[intervals2i][1]:
             #no intersection, and check the next late group
             intervals2i += 1
             continue
@@ -90,15 +96,13 @@ def calcSingleIntersection(intervals1, intervals2):
 
 
 
-
-
 def intervalOverlap(groupsList):
-    intersectingIntervalsList = groupsList[0][groupsList[0].value == 1][['startDate', 'endDate']].values()
+    intersectingIntervalsList = groupsList[0][groupsList[0].value == 1][['startTime', 'endTime']].values
     for groupsi in range(1, len(groupsList)):
-        listForm = groupsList[groupsi][groupsList[groupsi].value == 1][['startDate', 'endDate']].values()
-        intersectingIntervalsList = calcSingleIntersection(intersectingIntervalsList, groupsList[groupsi])
+        listForm = groupsList[groupsi][groupsList[groupsi].value == 1][['startTime', 'endTime']].values
+        intersectingIntervalsList = calcSingleIntersection(intersectingIntervalsList, listForm)
     
-    ColumnNames = ["startDate", "endDate", "value"]
+    ColumnNames = ["startTime", "endTime", "value"]
     dfVals = [[interval[0], interval[1], 1] for interval in intersectingIntervalsList]
     intersectingIntervals = pd.DataFrame(columns=ColumnNames, data=dfVals)
     return infillIntervals(intersectingIntervals)
@@ -192,7 +196,7 @@ def graphMultiHRDate(HRDfs, forDate, deviceNames, cutOffTime = time(12,0,0), tim
 def getHRsForTimePeriods(intervals, HRDf):
     mask = pd.Series([False] * len(HRDf), index=HRDf.index)
     
-    for start, end in intervals[['startDate', 'endDate']].values.tolist():
+    for start, end in intervals[['startTime', 'endTime']].values.tolist():
         # Use binary search to find the positions of the start and end times
         start_idx = HRDf.index.searchsorted(start, side='left')  # Start index (left inclusive)
         end_idx = HRDf.index.searchsorted(end, side='right')     # End index (right exclusive)
@@ -340,33 +344,33 @@ def regroupHypno(hypnoDF, includedTypes):
     hypnoDF['ConsecutiveGroup'] = hypnoDF['isNewGroup'].cumsum()
 
     # there must be a simpler way to do this, but it works
-    # left join hypnodf with grouped first startDate and last endDate
+    # left join hypnodf with grouped first startTime and last endTime
     endTimesOfGroups = pd.merge(hypnoDF, 
-                            hypnoDF.groupby('ConsecutiveGroup').endDate.agg(max), 
+                            hypnoDF.groupby('ConsecutiveGroup').endTime.agg(max), 
                             on='ConsecutiveGroup',
-                            how='left')[['endDate_x', 'endDate_y']]
+                            how='left')[['endTime_x', 'endTime_y']]
 
     hypnoDF = pd.merge(hypnoDF, endTimesOfGroups, 
-                    left_on='endDate', 
-                    right_on='endDate_x').drop('endDate_x', axis=1)
+                    left_on='endTime', 
+                    right_on='endTime_x').drop('endTime_x', axis=1)
 
     startTimesOfGroups = pd.merge(hypnoDF, 
-                                hypnoDF.groupby('ConsecutiveGroup').startDate.agg(min), 
+                                hypnoDF.groupby('ConsecutiveGroup').startTime.agg(min), 
                                 on='ConsecutiveGroup',
-                                how='left')[['startDate_x', 'startDate_y']]
+                                how='left')[['startTime_x', 'startTime_y']]
 
     hypnoDF = pd.merge(hypnoDF,startTimesOfGroups,
-                    left_on='startDate', 
-                    right_on='startDate_x').drop('startDate_x', axis=1)
+                    left_on='startTime', 
+                    right_on='startTime_x').drop('startTime_x', axis=1)
     
     #print(hypnoDF.head(20))
     # rename Columns
-    dfToReturn = pd.DataFrame(columns=['startDate', 'endDate', 'value'])
+    dfToReturn = pd.DataFrame(columns=['startTime', 'endTime', 'value'])
 
-    dfToReturn['endDate'] = hypnoDF['endDate_y']
-    dfToReturn['startDate'] = hypnoDF['startDate_y']
+    dfToReturn['endTime'] = hypnoDF['endTime_y']
+    dfToReturn['startTime'] = hypnoDF['startTime_y']
     dfToReturn['value'] = hypnoDF["isInTypes"]
-    dfToReturn['durationInMin'] = (dfToReturn['endDate'] - dfToReturn['startDate']).dt.total_seconds()/60
+    dfToReturn['durationInMin'] = (dfToReturn['endTime'] - dfToReturn['startTime']).dt.total_seconds()/60
     #print(dfToReturn.drop_duplicates().head(5))
     return dfToReturn.drop_duplicates()
 
@@ -377,19 +381,19 @@ import matplotlib.pyplot as plt
 def graphHypnoDate(hypnoDf, forDate, deviceName, cutOffTime = time(12,0,0), timezone = 'US/Arizona'):
     graphTimeStart = pytz.timezone(timezone).localize(datetime.combine(forDate - timedelta(days=1), cutOffTime))
     graphTimeEnd = graphTimeStart + timedelta(days=1)
-    hypnoDfForDay = hypnoDf[(hypnoDf['startDate'] < graphTimeEnd) &
-                            (hypnoDf['endDate'] > graphTimeStart)]
+    hypnoDfForDay = hypnoDf[(hypnoDf['startTime'] < graphTimeEnd) &
+                            (hypnoDf['endTime'] > graphTimeStart)]
 
-    # print(hypnoDfForDay['startDate'].iloc[0])
+    # print(hypnoDfForDay['startTime'].iloc[0])
     # print(hypnoDfForDay['value'].iloc[0])
-    # print(hypnoDfForDay['endDate'].iloc[0])
+    # print(hypnoDfForDay['endTime'].iloc[0])
 
     values = []
     times = []
     for rowIndex in range(len(hypnoDfForDay)):
-        times.append(hypnoDfForDay.iloc[rowIndex]['startDate'])
+        times.append(hypnoDfForDay.iloc[rowIndex]['startTime'])
         values.append(hypnoDfForDay.iloc[rowIndex]['value'])
-        times.append(hypnoDfForDay.iloc[rowIndex]['endDate'])
+        times.append(hypnoDfForDay.iloc[rowIndex]['endTime'])
         values.append(hypnoDfForDay.iloc[rowIndex]['value'])
 
 
@@ -428,17 +432,17 @@ import matplotlib.pyplot as plt
 def graphHypnoandHRDate(hypnoDf, HRDf, forDate, sleepDeviceName, HRDeviceName, cutOffTime = time(12,0,0), timezone = 'US/Arizona'):
     graphTimeStart = pytz.timezone(timezone).localize(datetime.combine(forDate - timedelta(days=1), cutOffTime))
     graphTimeEnd = graphTimeStart + timedelta(days=1)
-    hypnoDfForDay = hypnoDf[(hypnoDf['startDate'] < graphTimeEnd) &
-                            (hypnoDf['endDate'] > graphTimeStart)]
+    hypnoDfForDay = hypnoDf[(hypnoDf['startTime'] < graphTimeEnd) &
+                            (hypnoDf['endTime'] > graphTimeStart)]
 
 
     #prepping hypno
     hypnoValues = []
     hypnoTimes = []
     for rowIndex in range(len(hypnoDfForDay)):
-        hypnoTimes.append(hypnoDfForDay.iloc[rowIndex]['startDate'])
+        hypnoTimes.append(hypnoDfForDay.iloc[rowIndex]['startTime'])
         hypnoValues.append(hypnoDfForDay.iloc[rowIndex]['value'])
-        hypnoTimes.append(hypnoDfForDay.iloc[rowIndex]['endDate'])
+        hypnoTimes.append(hypnoDfForDay.iloc[rowIndex]['endTime'])
         hypnoValues.append(hypnoDfForDay.iloc[rowIndex]['value'])
     
     # plotting Hypno
