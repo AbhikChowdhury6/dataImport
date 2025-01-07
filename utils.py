@@ -288,7 +288,6 @@ def rowsPerFile(Df, targetFileSize, workingDataHRPath, fileName = 'test.parquet.
         fileRows = len(pd.read_parquet(workingDataHRPath + fileName))
         file_size = os.path.getsize(workingDataHRPath + fileName)
     
-
     rows_per_file = int(fileRows//(file_size/targetFileSize))
     return rows_per_file
 

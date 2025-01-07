@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HealthData [
+<!-- HealthKit Export Version: 13 -->
+<!ELEMENT HealthData (ExportDate,Me,(Record|Correlation|Workout|ActivitySummary|ClinicalRecord|Audiogram|VisionPrescription)*)>
+<!ATTLIST HealthData
+  locale CDATA #REQUIRED
+>
+<!ELEMENT ExportDate EMPTY>
+<!ATTLIST ExportDate
+  value CDATA #REQUIRED
+>
+<!ELEMENT Me EMPTY>
+<!ATTLIST Me
+  HKCharacteristicTypeIdentifierDateOfBirth                   CDATA #REQUIRED
+  HKCharacteristicTypeIdentifierBiologicalSex                 CDATA #REQUIRED
+  HKCharacteristicTypeIdentifierBloodType                     CDATA #REQUIRED
+  HKCharacteristicTypeIdentifierFitzpatrickSkinType           CDATA #REQUIRED
+  HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse   CDATA #REQUIRED
+>
+<!ELEMENT Record ((MetadataEntry|HeartRateVariabilityMetadataList)*)>
+<!ATTLIST Record
+  type          CDATA #REQUIRED
+  unit          CDATA #IMPLIED
+  value         CDATA #IMPLIED
+  sourceName    CDATA #REQUIRED
+  sourceVersion CDATA #IMPLIED
+  device        CDATA #IMPLIED
+  creationDate  CDATA #IMPLIED
+  startDate     CDATA #REQUIRED
+  endDate       CDATA #REQUIRED
+>
+<!-- Note: Any Records that appear as children of a correlation also appear as top-level records in this document. -->
+<!ELEMENT Correlation ((MetadataEntry|Record)*)>
+<!ATTLIST Correlation
+  type          CDATA #REQUIRED
+  sourceName    CDATA #REQUIRED
+  sourceVersion CDATA #IMPLIED
+  device        CDATA #IMPLIED
+  creationDate  CDATA #IMPLIED
+  startDate     CDATA #REQUIRED
+  endDate       CDATA #REQUIRED
+>
+<!ELEMENT Workout ((MetadataEntry|WorkoutEvent|WorkoutRoute|WorkoutStatistics)*)>
+<!ATTLIST Workout
+  workoutActivityType   CDATA #REQUIRED
+  duration              CDATA #IMPLIED
+  durationUnit          CDATA #IMPLIED
+  totalDistance         CDATA #IMPLIED
+  totalDistanceUnit     CDATA #IMPLIED
+  totalEnergyBurned     CDATA #IMPLIED
+  totalEnergyBurnedUnit CDATA #IMPLIED
+  sourceName            CDATA #REQUIRED
+  sourceVersion         CDATA #IMPLIED
+  device                CDATA #IMPLIED
+  creationDate          CDATA #IMPLIED
+  startDate             CDATA #REQUIRED
+  endDate               CDATA #REQUIRED
+>
+<!ELEMENT WorkoutActivity ((MetadataEntry)*)>
+<!ATTLIST WorkoutActivity
+  uuid                 CDATA #REQUIRED
+  startDate            CDATA #REQUIRED
+  endDate              CDATA #IMPLIED
+  duration             CDATA #IMPLIED
+  durationUnit         CDATA #IMPLIED
+>
+<!ELEMENT WorkoutEvent ((MetadataEntry)*)>
+<!ATTLIST WorkoutEvent
+  type                 CDATA #REQUIRED
+  date                 CDATA #REQUIRED
+  duration             CDATA #IMPLIED
+  durationUnit         CDATA #IMPLIED
+>
+<!ELEMENT WorkoutStatistics EMPTY>
+<!ATTLIST WorkoutStatistics
+  type                 CDATA #REQUIRED
+  startDate            CDATA #REQUIRED
+  endDate              CDATA #REQUIRED
+  average              CDATA #IMPLIED
+  minimum              CDATA #IMPLIED
+  maximum              CDATA #IMPLIED
+  sum                  CDATA #IMPLIED
+  unit                 CDATA #IMPLIED
+>
+<!ELEMENT WorkoutRoute ((MetadataEntry|FileReference)*)>
+<!ATTLIST WorkoutRoute
+  sourceName    CDATA #REQUIRED
+  sourceVersion CDATA #IMPLIED
+  device        CDATA #IMPLIED
+  creationDate  CDATA #IMPLIED
+  startDate     CDATA #REQUIRED
+  endDate       CDATA #REQUIRED
+>
+<!ELEMENT FileReference EMPTY>
+<!ATTLIST FileReference
+  path CDATA #REQUIRED
+>
+<!ELEMENT ActivitySummary EMPTY>
+<!ATTLIST ActivitySummary
+  dateComponents           CDATA #IMPLIED
+  activeEnergyBurned       CDATA #IMPLIED
+  activeEnergyBurnedGoal   CDATA #IMPLIED
+  activeEnergyBurnedUnit   CDATA #IMPLIED
+  appleMoveTime            CDATA #IMPLIED
+  appleMoveTimeGoal        CDATA #IMPLIED
+  appleExerciseTime        CDATA #IMPLIED
+  appleExerciseTimeGoal    CDATA #IMPLIED
+  appleStandHours          CDATA #IMPLIED
+  appleStandHoursGoal      CDATA #IMPLIED
+>
+<!ELEMENT MetadataEntry EMPTY>
+<!ATTLIST MetadataEntry
+  key   CDATA #REQUIRED
+  value CDATA #REQUIRED
+>
+<!-- Note: Heart Rate Variability records captured by Apple Watch may include an associated list of instantaneous beats-per-minute readings. -->
+<!ELEMENT HeartRateVariabilityMetadataList (InstantaneousBeatsPerMinute*)>
+<!ELEMENT InstantaneousBeatsPerMinute EMPTY>
+<!ATTLIST InstantaneousBeatsPerMinute
+  bpm  CDATA #REQUIRED
+  time CDATA #REQUIRED
+>
+<!ELEMENT ClinicalRecord EMPTY>
+<!ATTLIST ClinicalRecord
+  type              CDATA #REQUIRED
+  identifier        CDATA #REQUIRED
+  sourceName        CDATA #REQUIRED
+  sourceURL         CDATA #REQUIRED
+  fhirVersion       CDATA #REQUIRED
+  receivedDate      CDATA #REQUIRED
+  resourceFilePath  CDATA #REQUIRED
+>
+<!ELEMENT Audiogram ((MetadataEntry|SensitivityPoint)*)>
+<!ATTLIST Audiogram
+  type          CDATA #REQUIRED
+  sourceName    CDATA #REQUIRED
+  sourceVersion CDATA #IMPLIED
+  device        CDATA #IMPLIED
+  creationDate  CDATA #IMPLIED
+  startDate     CDATA #REQUIRED
+  endDate       CDATA #REQUIRED
+>
+<!ELEMENT SensitivityPoint EMPTY>
+<!ATTLIST SensitivityPoint
+  frequencyValue   CDATA #REQUIRED
+  frequencyUnit    CDATA #REQUIRED
+  leftEarValue     CDATA #IMPLIED
+  leftEarUnit      CDATA #IMPLIED
+  rightEarValue    CDATA #IMPLIED
+  rightEarUnit     CDATA #IMPLIED
+>
+<!ELEMENT VisionPrescription ((RightEye|LeftEye|Attachment|MetadataEntry)*)>
+<!ATTLIST VisionPrescription
+  type             CDATA #REQUIRED
+  dateIssued       CDATA #REQUIRED
+  expirationDate   CDATA #IMPLIED
+  brand            CDATA #IMPLIED
+>
+<!ELEMENT RightEye EMPTY>
+<!ATTLIST RightEye
+  sphere           CDATA #IMPLIED
+  sphereUnit       CDATA #IMPLIED
+  cylinder         CDATA #IMPLIED
+  cylinderUnit     CDATA #IMPLIED
+  axis             CDATA #IMPLIED
+  axisUnit         CDATA #IMPLIED
+  add              CDATA #IMPLIED
+  addUnit          CDATA #IMPLIED
+  vertex           CDATA #IMPLIED
+  vertexUnit       CDATA #IMPLIED
+  prismAmount      CDATA #IMPLIED
+  prismAmountUnit  CDATA #IMPLIED
+  prismAngle       CDATA #IMPLIED
+  prismAngleUnit   CDATA #IMPLIED
+  farPD            CDATA #IMPLIED
+  farPDUnit        CDATA #IMPLIED
+  nearPD           CDATA #IMPLIED
+  nearPDUnit       CDATA #IMPLIED
+  baseCurve        CDATA #IMPLIED
+  baseCurveUnit    CDATA #IMPLIED
+  diameter         CDATA #IMPLIED
+  diameterUnit     CDATA #IMPLIED
+>
+<!ELEMENT LeftEye EMPTY>
+<!ATTLIST LeftEye
+  sphere           CDATA #IMPLIED
+  sphereUnit       CDATA #IMPLIED
+  cylinder         CDATA #IMPLIED
+  cylinderUnit     CDATA #IMPLIED
+  axis             CDATA #IMPLIED
+  axisUnit         CDATA #IMPLIED
+  add              CDATA #IMPLIED
+  addUnit          CDATA #IMPLIED
+  vertex           CDATA #IMPLIED
+  vertexUnit       CDATA #IMPLIED
+  prismAmount      CDATA #IMPLIED
+  prismAmountUnit  CDATA #IMPLIED
+  prismAngle       CDATA #IMPLIED
+  prismAngleUnit   CDATA #IMPLIED
+  farPD            CDATA #IMPLIED
+  farPDUnit        CDATA #IMPLIED
+  nearPD           CDATA #IMPLIED
+  nearPDUnit       CDATA #IMPLIED
+  baseCurve        CDATA #IMPLIED
+  baseCurveUnit    CDATA #IMPLIED
+  diameter         CDATA #IMPLIED
+  diameterUnit     CDATA #IMPLIED
+>
+<!ELEMENT Attachment EMPTY>
+<!ATTLIST Attachment
+  identifier       CDATA #IMPLIED
+>
+]>
+<HealthData locale="en_US">
+ <ExportDate value="2024-09-17 12:53:31 -0700"/>
+ <Me HKCharacteristicTypeIdentifierDateOfBirth="1996-07-20" HKCharacteristicTypeIdentifierBiologicalSex="HKBiologicalSexMale" HKCharacteristicTypeIdentifierBloodType="HKBloodTypeNotSet" HKCharacteristicTypeIdentifierFitzpatrickSkinType="HKFitzpatrickSkinTypeNotSet" HKCharacteristicTypeIdentifierCardioFitnessMedicationsUse="None"/>
+ <Record type="HKQuantityTypeIdentifierHeight" sourceName="Abhik’s iPhone" sourceVersion="14.6" unit="ft" creationDate="2021-07-19 19:47:20 -0700" startDate="2021-07-19 19:47:20 -0700" endDate="2021-07-19 19:47:20 -0700" value="5.66667"/>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Abhik’s iPhone" sourceVersion="14.6" unit="lb" creationDate="2021-07-19 19:47:20 -0700" startDate="2021-07-19 19:47:20 -0700" endDate="2021-07-19 19:47:20 -0700" value="129"/>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:07 -0700" startDate="2021-07-19 19:55:06 -0700" endDate="2021-07-19 19:55:06 -0700" value="78">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:12 -0700" startDate="2021-07-19 19:55:11 -0700" endDate="2021-07-19 19:55:11 -0700" value="79">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:17 -0700" startDate="2021-07-19 19:55:14 -0700" endDate="2021-07-19 19:55:14 -0700" value="80">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:22 -0700" startDate="2021-07-19 19:55:21 -0700" endDate="2021-07-19 19:55:21 -0700" value="82">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:27 -0700" startDate="2021-07-19 19:55:23 -0700" endDate="2021-07-19 19:55:23 -0700" value="83">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:32 -0700" startDate="2021-07-19 19:55:30 -0700" endDate="2021-07-19 19:55:30 -0700" value="84">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:37 -0700" startDate="2021-07-19 19:55:34 -0700" endDate="2021-07-19 19:55:34 -0700" value="82">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:42 -0700" startDate="2021-07-19 19:55:41 -0700" endDate="2021-07-19 19:55:41 -0700" value="88">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:47 -0700" startDate="2021-07-19 19:55:46 -0700" endDate="2021-07-19 19:55:46 -0700" value="83">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:52 -0700" startDate="2021-07-19 19:55:49 -0700" endDate="2021-07-19 19:55:49 -0700" value="82">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Abhik’s Apple Watch" sourceVersion="7.6" device="&lt;&lt;HKDevice: 0x303ffe2b0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch6,1, software:7.6&gt;" unit="count/min" creationDate="2021-07-19 19:55:57 -0700" startDate="2021-07-19 19:55:52 -0700" endDate="2021-07-19 19:55:52 -0700" value="80">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+ </Record>
+</HealthData>
