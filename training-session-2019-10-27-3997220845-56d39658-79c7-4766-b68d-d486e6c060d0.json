@@ -1,0 +1,387 @@
+{
+  "exportVersion": "2.5",
+  "name": "Running",
+  "startTime": "2019-10-27T15:54:21.000",
+  "stopTime": "2019-10-27T15:55:31.000",
+  "timeZoneOffset": -420,
+  "duration": "PT70S",
+  "maximumHeartRate": 78,
+  "averageHeartRate": 67,
+  "kiloCalories": 1,
+  "physicalInformationSnapshot": {
+    "dateTime": "2019-10-27T22:57:30.000",
+    "sex": "MALE",
+    "birthday": "1996-07-20",
+    "height, cm": 175.0,
+    "weight, kg": 59.0,
+    "functionalThresholdPower": 236
+  },
+  "exercises": [
+    {
+      "startTime": "2019-10-27T15:54:21.000",
+      "stopTime": "2019-10-27T15:55:31.000",
+      "timezoneOffset": -420,
+      "duration": "PT70S",
+      "distance": 0.0,
+      "sport": "RUNNING",
+      "kiloCalories": 1,
+      "heartRate": {
+        "min": 61,
+        "avg": 67,
+        "max": 78
+      },
+      "zones": {
+        "fit_fat": [
+          {
+            "lowerLimit": 0,
+            "higherLimit": 134,
+            "inZone": "PT69S",
+            "zoneIndex": 1
+          },
+          {
+            "lowerLimit": 134,
+            "higherLimit": 240,
+            "inZone": "PT0S",
+            "zoneIndex": 2
+          }
+        ],
+        "heart_rate": [
+          {
+            "lowerLimit": 99,
+            "higherLimit": 118,
+            "inZone": "PT0S",
+            "zoneIndex": 1
+          },
+          {
+            "lowerLimit": 118,
+            "higherLimit": 138,
+            "inZone": "PT0S",
+            "zoneIndex": 2
+          },
+          {
+            "lowerLimit": 138,
+            "higherLimit": 158,
+            "inZone": "PT0S",
+            "zoneIndex": 3
+          },
+          {
+            "lowerLimit": 158,
+            "higherLimit": 177,
+            "inZone": "PT0S",
+            "zoneIndex": 4
+          },
+          {
+            "lowerLimit": 177,
+            "higherLimit": 197,
+            "inZone": "PT0S",
+            "zoneIndex": 5
+          }
+        ]
+      },
+      "samples": {
+        "heartRate": [
+          {
+            "dateTime": "2019-10-27T15:54:21.000",
+            "value": 0
+          },
+          {
+            "dateTime": "2019-10-27T15:54:22.000",
+            "value": 66
+          },
+          {
+            "dateTime": "2019-10-27T15:54:23.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:54:24.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:54:25.000",
+            "value": 63
+          },
+          {
+            "dateTime": "2019-10-27T15:54:26.000",
+            "value": 63
+          },
+          {
+            "dateTime": "2019-10-27T15:54:27.000",
+            "value": 62
+          },
+          {
+            "dateTime": "2019-10-27T15:54:28.000",
+            "value": 61
+          },
+          {
+            "dateTime": "2019-10-27T15:54:29.000",
+            "value": 61
+          },
+          {
+            "dateTime": "2019-10-27T15:54:30.000",
+            "value": 62
+          },
+          {
+            "dateTime": "2019-10-27T15:54:31.000",
+            "value": 63
+          },
+          {
+            "dateTime": "2019-10-27T15:54:32.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:54:33.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:54:34.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:54:35.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:54:36.000",
+            "value": 66
+          },
+          {
+            "dateTime": "2019-10-27T15:54:37.000",
+            "value": 67
+          },
+          {
+            "dateTime": "2019-10-27T15:54:38.000",
+            "value": 69
+          },
+          {
+            "dateTime": "2019-10-27T15:54:39.000",
+            "value": 70
+          },
+          {
+            "dateTime": "2019-10-27T15:54:40.000",
+            "value": 73
+          },
+          {
+            "dateTime": "2019-10-27T15:54:41.000",
+            "value": 74
+          },
+          {
+            "dateTime": "2019-10-27T15:54:42.000",
+            "value": 75
+          },
+          {
+            "dateTime": "2019-10-27T15:54:43.000",
+            "value": 77
+          },
+          {
+            "dateTime": "2019-10-27T15:54:44.000",
+            "value": 78
+          },
+          {
+            "dateTime": "2019-10-27T15:54:45.000",
+            "value": 78
+          },
+          {
+            "dateTime": "2019-10-27T15:54:46.000",
+            "value": 78
+          },
+          {
+            "dateTime": "2019-10-27T15:54:47.000",
+            "value": 77
+          },
+          {
+            "dateTime": "2019-10-27T15:54:48.000",
+            "value": 77
+          },
+          {
+            "dateTime": "2019-10-27T15:54:49.000",
+            "value": 76
+          },
+          {
+            "dateTime": "2019-10-27T15:54:50.000",
+            "value": 75
+          },
+          {
+            "dateTime": "2019-10-27T15:54:51.000",
+            "value": 73
+          },
+          {
+            "dateTime": "2019-10-27T15:54:52.000",
+            "value": 73
+          },
+          {
+            "dateTime": "2019-10-27T15:54:53.000",
+            "value": 72
+          },
+          {
+            "dateTime": "2019-10-27T15:54:54.000",
+            "value": 71
+          },
+          {
+            "dateTime": "2019-10-27T15:54:55.000",
+            "value": 71
+          },
+          {
+            "dateTime": "2019-10-27T15:54:56.000",
+            "value": 70
+          },
+          {
+            "dateTime": "2019-10-27T15:54:57.000",
+            "value": 69
+          },
+          {
+            "dateTime": "2019-10-27T15:54:58.000",
+            "value": 69
+          },
+          {
+            "dateTime": "2019-10-27T15:54:59.000",
+            "value": 68
+          },
+          {
+            "dateTime": "2019-10-27T15:55:00.000",
+            "value": 68
+          },
+          {
+            "dateTime": "2019-10-27T15:55:01.000",
+            "value": 67
+          },
+          {
+            "dateTime": "2019-10-27T15:55:02.000",
+            "value": 66
+          },
+          {
+            "dateTime": "2019-10-27T15:55:03.000",
+            "value": 66
+          },
+          {
+            "dateTime": "2019-10-27T15:55:04.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:05.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:06.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:07.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:08.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:09.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:10.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:11.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:12.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:13.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:14.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:15.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:16.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:17.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:18.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:19.000",
+            "value": 64
+          },
+          {
+            "dateTime": "2019-10-27T15:55:20.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:21.000",
+            "value": 65
+          },
+          {
+            "dateTime": "2019-10-27T15:55:22.000",
+            "value": 66
+          },
+          {
+            "dateTime": "2019-10-27T15:55:23.000",
+            "value": 67
+          },
+          {
+            "dateTime": "2019-10-27T15:55:24.000",
+            "value": 69
+          },
+          {
+            "dateTime": "2019-10-27T15:55:25.000",
+            "value": 70
+          },
+          {
+            "dateTime": "2019-10-27T15:55:26.000",
+            "value": 70
+          },
+          {
+            "dateTime": "2019-10-27T15:55:27.000",
+            "value": 70
+          },
+          {
+            "dateTime": "2019-10-27T15:55:28.000",
+            "value": 69
+          },
+          {
+            "dateTime": "2019-10-27T15:55:29.000",
+            "value": 67
+          },
+          {
+            "dateTime": "2019-10-27T15:55:30.000",
+            "value": 66
+          }
+        ]
+      },
+      "loadInformation": {
+        "cardioLoad": 0.0805934,
+        "muscleLoad": -1.0,
+        "cardioLoadInterpretation": "NOT_AVAILABLE",
+        "muscleLoadInterpretation": "NOT_AVAILABLE",
+        "calculationTime": "2019-10-27T15:54:21.000",
+        "sessionRpe": "UNKNOWN",
+        "perceivedLoad": 0.0,
+        "perceivedLoadInterpretation": "NOT_AVAILABLE"
+      }
+    }
+  ],
+  "loadInformation": {
+    "cardioLoad": 0.0805934,
+    "muscleLoad": -1.0,
+    "cardioLoadInterpretation": "NOT_AVAILABLE",
+    "muscleLoadInterpretation": "NOT_AVAILABLE",
+    "calculationTime": "2019-10-27T15:54:21.000",
+    "sessionRpe": "UNKNOWN",
+    "perceivedLoad": 0.0,
+    "perceivedLoadInterpretation": "NOT_AVAILABLE"
+  }
+}
