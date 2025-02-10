@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import sys
+from datetime import datetime
 
 cwd = os.getcwd()
 delimiter = "\\" if "\\" in cwd else "/"
@@ -113,4 +114,50 @@ def writeWorkingTSDf(partyName, deviceName, dataType, dataSource, TSDf, targetFi
         rows_per_file = calcRowsPerFile(TSDf, targetFileSize, fullPath, currentFileNames[0])
         writeToExistingTSFiles(TSDf, currentFileNames, fullPath, rows_per_file)
 
+def readWorkingTSDF(partyName, deviceName, dataType, dataSource, chnageTz = None, startTime = datetime.min, endTime = datetime.max):
+    # find the data folder
+    dataFolderName = "_".join([partyName, deviceName, dataType, dataSource]) + "/"
+    fullPath = workingDataPath + dataFolderName
+    if not os.path.exists(fullPath):
+        print("no folder with the location " + fullPath)
+        return None
+
+
+    fileNames = sorted(os.listdir(fullPath))
+    if len(fileNames) == 0:
+        print("no data in the folder")
+        return None
+
+
+    foundFileCount = 0
+    for fname in fileNames:
+        # index 0 is start time, index 1 is end time
+        fnElements = fname.split("_")
+        
+        # check if the file name lands within the the start and end time
+        if not (datetime.fromisoformat(fnElements[0]) < endTime and datetime.fromisoformat(fnElements[1]) > startTime):
+            continue
+        
+        #read in the file
+        foundFileCount += 1
+        if foundFileCount == 1:
+            readDF = pandas.read_parquet(fullPath + fname)
+        else:
+            pd.concat([readDF, pandas.read_parquet(fullPath + fname)])
+    
+    
+    if foundFileCount == 0:
+        print("No files found for the requested dates")
+        return None
+
+    # a sorted copy of the df you read in based on the exact bounds passed in
+    dfToReturn = readDF.iloc[startTime:endTime].sort_index().copy()
+    
+    if chnageTz is not None:
+        print("converting to timeszone " + chnageTz)
+        dfToReturn.index = dfToReturn.index.tz_convert(chnageTz)
+    
+    print(f"read in {len(readDF)} rows from {foundFileCount} files, retruning {len(dfToReturn)} rows")
+
+    return dfToReturn
 
