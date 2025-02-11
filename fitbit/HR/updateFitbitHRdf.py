@@ -53,4 +53,4 @@ fitbitHRdf.index = fitbitHRdf.index.tz_localize('UTC')
 fitbitHRdf["confidence"] = fitbitHRdf["confidence"].astype('uint8')
 
 #write the DF
-writeWorkingTSDf("fitbit", "charge4or5", "hr", "builtin", fitbitHRdf)
+writeWorkingTSDf("abhik", "0", "fitbit", "charge4or5", "hr", "builtin", fitbitHRdf)

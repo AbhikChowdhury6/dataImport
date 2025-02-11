@@ -96,8 +96,8 @@ def writeToExistingTSFiles(TSDf, fileNames, targetPath, rows_per_file):
 
 
 ####### this is the function to be used
-def writeWorkingTSDf(partyName, deviceName, dataType, dataSource, TSDf, targetFileSize = 2 * 1024 * 1024):
-    dataFolderName = "_".join([partyName, deviceName, dataType, dataSource]) + "/"
+def writeWorkingTSDf(responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource, TSDf, targetFileSize = 2 * 1024 * 1024):
+    dataFolderName = "_".join([responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource]) + "/"
     fullPath = workingDataPath + dataFolderName
     if not os.path.exists(fullPath):
         os.makedirs(fullPath)
@@ -114,9 +114,9 @@ def writeWorkingTSDf(partyName, deviceName, dataType, dataSource, TSDf, targetFi
         rows_per_file = calcRowsPerFile(TSDf, targetFileSize, fullPath, currentFileNames[0])
         writeToExistingTSFiles(TSDf, currentFileNames, fullPath, rows_per_file)
 
-def readWorkingTSDF(partyName, deviceName, dataType, dataSource, chnageTz = None, startTime = datetime.min, endTime = datetime.max):
+def readWorkingTSDF(responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource, chnageTz = None, startTime = datetime.min, endTime = datetime.max):
     # find the data folder
-    dataFolderName = "_".join([partyName, deviceName, dataType, dataSource]) + "/"
+    dataFolderName = "_".join([responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource]) + "/"
     fullPath = workingDataPath + dataFolderName
     if not os.path.exists(fullPath):
         print("no folder with the location " + fullPath)

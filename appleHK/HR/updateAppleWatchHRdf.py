@@ -55,4 +55,4 @@ def getAppleHKSamplesForDevice(targetSourceName, targetRecordType, exportsDataPa
 
 watchData = getAppleHKSamplesForDevice(appleDeviceName, "HKQuantityTypeIdentifierHeartRate", exportsDataPath)
 
-writeWorkingTSDf("apple", deviceName, "hr", "builtin", watchData)
+writeWorkingTSDf("abhik", "0", "apple", deviceName, "hr", "builtin", watchData)
