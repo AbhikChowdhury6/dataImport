@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import sys
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 cwd = os.getcwd()
 delimiter = "\\" if "\\" in cwd else "/"
@@ -12,6 +13,12 @@ workingDataPath = repoPath + "workingData/"
 
 import hashlib
 import pickle
+
+def fnString_to_dt(fn_string):
+    return datetime.fromisoformat(fn_string.replace(",", "."))
+
+def dt_to_fnString(dt):
+    return dt.astimezone(ZoneInfo("UTC")).strftime('%Y-%m-%dT%H%M%S,%f%z')
 
 # Function to compute a short hash of a Python object
 def short_hash(obj, length=8):
@@ -28,9 +35,9 @@ def short_hash(obj, length=8):
 # this writes a file for a timeSeries of a DF
 def writeTimeSeriesDf(TSDf, targetPath):
     sh = short_hash(TSDf)
-    parquetName = TSDf.iloc[0].name.strftime('%Y-%m-%dT%H%M%S%z') +\
+    parquetName = dt_to_fnString(TSDf.iloc[0].name) +\
                 "_" +\
-                TSDf.iloc[-1].name.strftime('%Y-%m-%dT%H%M%S%z') +\
+                dt_to_fnString(TSDf.iloc[-1].name) +\
                 "_" + sh + "_" + ".parquet.gzip"
     print(f"saved to a file named {parquetName}")
 
@@ -79,12 +86,12 @@ def writeToExistingTSFiles(TSDf, fileNames, targetPath, rows_per_file):
         if fileNum == 0:
             startTime = TSDf.index[0]
         else:
-            startTime = pd.to_datetime(fileName.split('_')[0]).tz_convert(tzi)
+            startTime = fnString_to_dt(fileName.split('_')[0]).tz_convert(tzi)
         
         if len(fileNames) == 1 or fileNum == len(fileNames) - 1:
             endTime = TSDf.index[-1]
         else:
-            endTime = pd.to_datetime(fileNames[fileNum + 1].split('_')[0]).tz_convert(tzi)
+            endTime = fnString_to_dt(fileNames[fileNum + 1].split('_')[0]).tz_convert(tzi)
         
         # if the hash doesn't match write a new file
         if short_hash(TSDf.loc[startTime:endTime]) != fileName.split('_')[2]:
@@ -128,14 +135,15 @@ def readWorkingTSDF(responsiblePartyName, instanceName, developingPartyName, dev
         print("no data in the folder")
         return None
 
+    justTimes = [x.split(".")[0] for x in fileNames]
 
     foundFileCount = 0
-    for fname in fileNames:
+    for fname in justTimes:
         # index 0 is start time, index 1 is end time
         fnElements = fname.split("_")
         
         # check if the file name lands within the the start and end time
-        if not (datetime.fromisoformat(fnElements[0]) < endTime and datetime.fromisoformat(fnElements[1]) > startTime):
+        if not (fnString_to_dt(fnElements[0]) < endTime and fnString_to_dt(fnElements[1]) > startTime):
             continue
         
         #read in the file
