@@ -21,20 +21,18 @@ def dt_to_fnString(dt):
     return dt.astimezone(ZoneInfo("UTC")).strftime('%Y-%m-%dT%H%M%S,%f%z')
 
 # Function to compute a short hash of a Python object
-def short_hash(obj, length=8):
-    # Serialize the object using pickle
-    obj_bytes = pickle.dumps(obj)
-    
-    # Compute MD5 hash of the serialized object
-    hash_obj = hashlib.md5(obj_bytes)
-    
+def short_hash_df(df, length=8):
+    values_hash = pd.util.hash_pandas_object(df).values
+    index_hash = pd.util.hash_pandas_object(df.index).values
+    combined = np.concatenate((values_hash, index_hash)).tobytes()
+
     # Return the hash truncated to the specified length
-    return hash_obj.hexdigest()[:length]
+    return hashlib.md5(obj_bytes).hexdigest()[:length]
 
 
 # this writes a file for a timeSeries of a DF
 def writeTimeSeriesDf(TSDf, targetPath):
-    sh = short_hash(TSDf)
+    sh = short_hash_df(TSDf)
     parquetName = dt_to_fnString(TSDf.iloc[0].name) +\
                 "_" +\
                 dt_to_fnString(TSDf.iloc[-1].name) +\
@@ -84,20 +82,36 @@ def writeToExistingTSFiles(TSDf, fileNames, targetPath, rows_per_file):
     tzi = TSDf.index[0].tzinfo
     for fileNum, fileName in enumerate(fileNames):
         if fileNum == 0:
-            startTime = TSDf.index[0]
+            startTime = datetime.minvalue
         else:
-            startTime = fnString_to_dt(fileName.split('_')[0]).tz_convert(tzi)
+            startTime = fnString_to_dt(fileName.split('_')[0]).astimezone(tzi)
         
         if len(fileNames) == 1 or fileNum == len(fileNames) - 1:
-            endTime = TSDf.index[-1]
+            endTime = datetime.maxvalue
         else:
-            endTime = fnString_to_dt(fileNames[fileNum + 1].split('_')[0]).tz_convert(tzi)
+            endTime = fnString_to_dt(fileNames[fileNum + 1].split('_')[0]).astimezone(tzi)
         
+        sdf = TSDf.loc[startTime:endTime]
+        if len(sdf) == 0:
+            print("nothing to add")
+            continue
+
         # if the hash doesn't match write a new file
-        if short_hash(TSDf.loc[startTime:endTime]) != fileName.split('_')[2]:
-            print("the hashes don't match")
-            os.remove(targetPath + fileName)
-            saveRows(TSDf.loc[startTime:endTime], targetPath, rows_per_file)
+        if short_hash_df(sdf) != fileName.split('_')[2]:
+            print(f"the hashes don't match for start time {startTime} to end time {endTime}")
+            print("reading and combining to see if there's any new data")
+            # read in that file
+            existingParquet = pd.read_parquet(targetPath + fileName)
+            # combine, sort and deduplicate the dfs
+            combinedParquet = pd.concat[sdf, existingParquet]
+            combinedParquet = combinedParquet[~combinedParquet.index.duplicated(keep="first")].sort_index()
+            # then save rows for the combined df
+            if short_hash_df(combinedParquet) == fileName.split('_')[2]:
+                print("hashes match now")
+            else:
+                print("hashes still don't match")
+                os.remove(targetPath + fileName)
+                saveRows(combinedParquet, targetPath, rows_per_file)
         else:
             print(f'hashes match for {fileName}')
 
