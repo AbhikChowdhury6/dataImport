@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import pytz
 
 cwd = os.getcwd()
 delimiter = "\\" if "\\" in cwd else "/"
@@ -12,7 +13,7 @@ workingDataPath = repoPath + "workingData/"
 
 
 import hashlib
-import pickle
+import numpy as np
 
 def fnString_to_dt(fn_string):
     return datetime.fromisoformat(fn_string.replace(",", "."))
@@ -27,7 +28,7 @@ def short_hash_df(df, length=8):
     combined = np.concatenate((values_hash, index_hash)).tobytes()
 
     # Return the hash truncated to the specified length
-    return hashlib.md5(obj_bytes).hexdigest()[:length]
+    return hashlib.md5(combined).hexdigest()[:length]
 
 
 # this writes a file for a timeSeries of a DF
@@ -82,12 +83,12 @@ def writeToExistingTSFiles(TSDf, fileNames, targetPath, rows_per_file):
     tzi = TSDf.index[0].tzinfo
     for fileNum, fileName in enumerate(fileNames):
         if fileNum == 0:
-            startTime = datetime.minvalue
+            startTime = pd.Timestamp.min.tz_localize("UTC")
         else:
             startTime = fnString_to_dt(fileName.split('_')[0]).astimezone(tzi)
         
         if len(fileNames) == 1 or fileNum == len(fileNames) - 1:
-            endTime = datetime.maxvalue
+            endTime = pd.Timestamp.max.tz_localize("UTC")
         else:
             endTime = fnString_to_dt(fileNames[fileNum + 1].split('_')[0]).astimezone(tzi)
         
@@ -103,7 +104,7 @@ def writeToExistingTSFiles(TSDf, fileNames, targetPath, rows_per_file):
             # read in that file
             existingParquet = pd.read_parquet(targetPath + fileName)
             # combine, sort and deduplicate the dfs
-            combinedParquet = pd.concat[sdf, existingParquet]
+            combinedParquet = pd.concat([sdf, existingParquet])
             combinedParquet = combinedParquet[~combinedParquet.index.duplicated(keep="first")].sort_index()
             # then save rows for the combined df
             if short_hash_df(combinedParquet) == fileName.split('_')[2]:
@@ -135,7 +136,8 @@ def writeWorkingTSDf(responsiblePartyName, instanceName, developingPartyName, de
         rows_per_file = calcRowsPerFile(TSDf, targetFileSize, fullPath, currentFileNames[0])
         writeToExistingTSFiles(TSDf, currentFileNames, fullPath, rows_per_file)
 
-def readWorkingTSDF(responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource, chnageTz = None, startTime = datetime.min, endTime = datetime.max):
+def readWorkingTSDF(responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource,
+                     chnageTz = None, startTime = pd.Timestamp.min.tz_localize("UTC"), endTime = pd.Timestamp.max.tz_localize("UTC")):
     # find the data folder
     dataFolderName = "_".join([responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource]) + "/"
     fullPath = workingDataPath + dataFolderName
@@ -163,9 +165,9 @@ def readWorkingTSDF(responsiblePartyName, instanceName, developingPartyName, dev
         #read in the file
         foundFileCount += 1
         if foundFileCount == 1:
-            readDF = pandas.read_parquet(fullPath + fname)
+            readDF = pd.read_parquet(fullPath + fname + ".parquet.gzip")
         else:
-            pd.concat([readDF, pandas.read_parquet(fullPath + fname)])
+            pd.concat([readDF, pd.read_parquet(fullPath + fname + ".parquet.gzip")])
     
     
     if foundFileCount == 0:
@@ -173,7 +175,8 @@ def readWorkingTSDF(responsiblePartyName, instanceName, developingPartyName, dev
         return None
 
     # a sorted copy of the df you read in based on the exact bounds passed in
-    dfToReturn = readDF.iloc[startTime:endTime].sort_index().copy()
+    print(readDF.head())
+    dfToReturn = readDF[startTime:endTime].sort_index().copy()
     
     if chnageTz is not None:
         print("converting to timeszone " + chnageTz)
