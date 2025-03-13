@@ -2,6 +2,11 @@
 # it won't handle slicing videos
 # it won't look at the names of the devices
 
+# we can run this at 5:10 pm all of the sending should be done by then
+#crontab -e
+# 9 17 * * * /usr/bin/mv /home/uploadingGuest/recentCaptures/* /home/chowder/Documents/recentCaptures/
+# 10 17 * * * /home/chowder/anaconda3/envs/vision/bin/python /home/chowder/Documents/dataImport/homeVideo/intakeHomeVids.py 
+
 from datetime import datetime, timedelta
 import pandas as pd
 import os
