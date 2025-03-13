@@ -127,6 +127,8 @@ def writeWorkingTSDf(responsiblePartyName, instanceName, developingPartyName, de
 
     TSDf.index = TSDf.index.tz_convert('UTC')
 
+    TSDf = TSDf[~TSDf.index.duplicated(keep="first")].sort_index()
+
 
     if len(currentFileNames) == 0:
         rows_per_file = calcRowsPerFile(TSDf, targetFileSize, fullPath)

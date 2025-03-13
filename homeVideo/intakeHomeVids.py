@@ -1,0 +1,59 @@
+# this function will just read in the folders and put them in the bulk data
+# it won't handle slicing videos
+# it won't look at the names of the devices
+
+from datetime import datetime, timedelta
+import pandas as pd
+import os
+import sys
+import shutil
+
+def getRepoPath():
+    cwd = os.getcwd()
+    delimiter = "\\" if "\\" in cwd else "/"
+    repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("dataImport")]) + delimiter
+    return repoPath
+repoPath = getRepoPath()
+sys.path.append(repoPath + "dataImport/")
+import rwWorkingTSDf
+from rwWorkingTSDf import writeWorkingTSDf, fnString_to_dt
+recentCapPath = repoPath + "recentCaptures/"
+bulkDataPath = repoPath + "bulkData/"
+
+def bulkExtension(time):
+    return time.strftime("%Y") + "/" + time.strftime("%m-%d") + "/"
+
+foldersToImport = sorted(os.listdir(recentCapPath))
+for f in foldersToImport:
+    # we don't really care about reading in the day we just want the descriptor
+    camDescriptors = f.split("_")[:-1]
+
+    folderPath = recentCapPath + f + "/"
+    if os.path.exists(folderPath + "new.mp4"):  # if a leftover new got in
+        os.remove(folderPath + "new.mp4")
+
+    fileNameBases = sorted(list(set([x.split(".")[0] for x in os.listdir(folderPath)])))
+
+    # combine all parquets
+    for i, fb in enumerate(fileNameBases):
+        source = folderPath + fb + ".parquet"
+        rDf = pd.read_parquet(source)
+        rDf.index = rDf.index.tz_convert('UTC')
+        if i == 0:
+            readDf = rDf
+        else:
+            readDf = pd.concat([readDf, rDf])
+    
+    writeWorkingTSDf(*camDescriptors, readDf)
+
+    for fb in fileNameBases:
+        vidStrartTime = fnString_to_dt(fb.split("_"))
+        fileName = fb + ".mp4"
+        source = folderPath + "/" + fileName
+        destinationBase =  bulkDataPath + "_".join(camDescriptors) + bulkExtension(vidStrartTime)
+        if not os.path.exists(destinationBase):
+                print("made directory " + destinationBase)
+                os.makedirs(destinationBase)
+        shutil.move(source, destinationBase  + fileName)
+    
+    shutil.rmtree(folderPath)
