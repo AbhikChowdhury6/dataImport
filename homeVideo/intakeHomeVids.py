@@ -13,12 +13,9 @@ import os
 import sys
 import shutil
 
-def getRepoPath():
-    cwd = os.getcwd()
-    delimiter = "\\" if "\\" in cwd else "/"
-    repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("dataImport")]) + delimiter
-    return repoPath
-repoPath = getRepoPath()
+cwd = os.getcwd()
+delimiter = "\\" if "\\" in cwd else "/"
+repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("dataImport")]) + delimiter
 sys.path.append(repoPath + "dataImport/")
 import rwWorkingTSDf
 from rwWorkingTSDf import writeWorkingTSDf, fnString_to_dt
@@ -41,8 +38,12 @@ for f in foldersToImport:
 
     # combine all parquets
     for i, fb in enumerate(fileNameBases):
-        source = folderPath + fb + ".parquet"
+        source = folderPath + fb + ".parquet.gzip"
         rDf = pd.read_parquet(source)
+        # rDf = rDf.reset_index().set_index("videoIndex")
+        # rDf.rename(columns={'sampleDT': 'videoIndex'}, inplace=True)
+        # rDf.index.name = "sampleDT"
+        # print(rDf.head())
         rDf.index = rDf.index.tz_convert('UTC')
         if i == 0:
             readDf = rDf
@@ -52,10 +53,10 @@ for f in foldersToImport:
     writeWorkingTSDf(*camDescriptors, readDf)
 
     for fb in fileNameBases:
-        vidStrartTime = fnString_to_dt(fb.split("_"))
+        vidStrartTime = fnString_to_dt(fb.split("_")[0])
         fileName = fb + ".mp4"
         source = folderPath + "/" + fileName
-        destinationBase =  bulkDataPath + "_".join(camDescriptors) + bulkExtension(vidStrartTime)
+        destinationBase =  bulkDataPath + "_".join(camDescriptors) + "/" + bulkExtension(vidStrartTime)
         if not os.path.exists(destinationBase):
                 print("made directory " + destinationBase)
                 os.makedirs(destinationBase)

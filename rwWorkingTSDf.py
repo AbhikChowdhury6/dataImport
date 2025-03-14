@@ -177,7 +177,7 @@ def readWorkingTSDF(responsiblePartyName, instanceName, developingPartyName, dev
         return None
 
     # a sorted copy of the df you read in based on the exact bounds passed in
-    print(readDF.head())
+    # print(readDF.head())
     dfToReturn = readDF[startTime:endTime].sort_index().copy()
     
     if chnageTz is not None:
