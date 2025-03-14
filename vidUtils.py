@@ -9,6 +9,7 @@ delimiter = "\\" if "\\" in cwd else "/"
 repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("dataImport")]) + delimiter
 sys.path.append(repoPath + "dataImport/")
 bulkDataPath = repoPath + "bulkData/"
+daysVidsPath = repoPath + "daysVids/"
 from rwWorkingTSDf import writeWorkingTSDf, dt_to_fnString
 
 def bulkExtension(time):
@@ -41,3 +42,90 @@ def getFrame(deviceDescriptor, startTS, endTS, index):
 def getCap(deviceDescriptor, startTS, endTS):
     mp4Loc = getMP4Path(deviceDescriptor, startTS, endTS)
     return cv2.VideoCapture(mp4Loc)
+
+
+
+
+
+# def generateDaysVid(deviceDescriptor, ts):
+#     sourceDirectory = bulkDataPath + "_".join(deviceDescriptor) + "/" + bulkExtension(ts)
+#     if not os.path.exists(sourceDirectory):
+#         print("no directory " + sourceDirectory)
+#         return
+    
+#     targetDirecotry = daysVidsPath + "_".join(deviceDescriptor) + ts.strftime("_%Y-%m-%d/")
+#     if not os.path.exists(targetDirecotry):
+#         os.makedirs(targetDirecotry, exist_ok=True)
+    
+#     mp4s = sorted(os.listdir(sourceDirectory))
+    
+#     fourcc = cv2.VideoWriter_fourcc(*'avc1')
+#     for i, mp4 in enumerate(mp4s):
+#         cap = cv2.VideoCapture(sourceDirectory + mp4)
+#         if i == 0:
+#             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+#             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+#             output = cv2.VideoWriter(targetDirecotry + deviceDescriptor[1] + ".mp4",
+#                             fourcc, 
+#                             30.0, 
+#                             (width, height))
+        
+#         while True:
+#             ret, frame = cap.read()
+#             if ret:
+#                 output.write(frame)
+#             else:
+#                 break
+#         print("finished wrting : " + mp4)
+#     output.release()
+#     print("finished " + targetDirecotry)
+
+
+
+
+
+
+import os
+import subprocess
+
+def generateDaysVid(deviceDescriptor, ts):
+    sourceDirectory = bulkDataPath + "_".join(deviceDescriptor) + "/" + bulkExtension(ts)
+    if not os.path.exists(sourceDirectory):
+        print("No directory: " + sourceDirectory)
+        return
+    
+    targetDirectory = daysVidsPath + "_".join(deviceDescriptor) + ts.strftime("_%Y-%m-%d/")
+    os.makedirs(targetDirectory, exist_ok=True)
+
+    mp4s = sorted(os.listdir(sourceDirectory))
+
+    # Create a file listing all MP4s (ffmpeg requires this format)
+    list_file_path = os.path.join(targetDirectory, "file_list.txt")
+    with open(list_file_path, "w") as f:
+        for mp4 in mp4s:
+            f.write(f"file '{os.path.join(sourceDirectory, mp4)}'\n")
+
+    output_file = os.path.join(targetDirectory, f"{deviceDescriptor[1]}.mp4")
+
+    # Use ffmpeg to concatenate without re-encoding
+    ffmpeg_command = [
+        "ffmpeg", "-f", "concat", "-safe", "0",
+        "-i", list_file_path, "-c", "copy", output_file
+    ]
+    subprocess.run(ffmpeg_command, check=True)
+
+    print("Finished processing:", output_file)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
