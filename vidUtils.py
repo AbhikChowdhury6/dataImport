@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import sys
 import cv2
+import subprocess
+
 
 cwd = os.getcwd()
 delimiter = "\\" if "\\" in cwd else "/"
@@ -43,50 +45,6 @@ def getCap(deviceDescriptor, startTS, endTS):
     mp4Loc = getMP4Path(deviceDescriptor, startTS, endTS)
     return cv2.VideoCapture(mp4Loc)
 
-
-
-
-
-# def generateDaysVid(deviceDescriptor, ts):
-#     sourceDirectory = bulkDataPath + "_".join(deviceDescriptor) + "/" + bulkExtension(ts)
-#     if not os.path.exists(sourceDirectory):
-#         print("no directory " + sourceDirectory)
-#         return
-    
-#     targetDirecotry = daysVidsPath + "_".join(deviceDescriptor) + ts.strftime("_%Y-%m-%d/")
-#     if not os.path.exists(targetDirecotry):
-#         os.makedirs(targetDirecotry, exist_ok=True)
-    
-#     mp4s = sorted(os.listdir(sourceDirectory))
-    
-#     fourcc = cv2.VideoWriter_fourcc(*'avc1')
-#     for i, mp4 in enumerate(mp4s):
-#         cap = cv2.VideoCapture(sourceDirectory + mp4)
-#         if i == 0:
-#             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-#             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-#             output = cv2.VideoWriter(targetDirecotry + deviceDescriptor[1] + ".mp4",
-#                             fourcc, 
-#                             30.0, 
-#                             (width, height))
-        
-#         while True:
-#             ret, frame = cap.read()
-#             if ret:
-#                 output.write(frame)
-#             else:
-#                 break
-#         print("finished wrting : " + mp4)
-#     output.release()
-#     print("finished " + targetDirecotry)
-
-
-
-
-
-
-import os
-import subprocess
 
 def generateDaysVid(deviceDescriptor, ts):
     sourceDirectory = bulkDataPath + "_".join(deviceDescriptor) + "/" + bulkExtension(ts)
