@@ -12,7 +12,7 @@ repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("data
 sys.path.append(repoPath + "dataImport/")
 bulkDataPath = repoPath + "bulkData/"
 daysVidsPath = repoPath + "daysVids/"
-from rwWorkingTSDf import writeWorkingTSDf, dt_to_fnString
+from rwWorkingTSDf import dt_to_fnString
 
 def bulkExtension(time):
     return time.strftime("%Y") + "/" + time.strftime("%m-%d") + "/"

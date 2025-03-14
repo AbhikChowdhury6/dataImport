@@ -50,7 +50,7 @@ for f in foldersToImport:
         else:
             readDf = pd.concat([readDf, rDf])
     
-    writeWorkingTSDf(*camDescriptors, readDf)
+    writeWorkingTSDf(camDescriptors, readDf)
 
     for fb in fileNameBases:
         vidStrartTime = fnString_to_dt(fb.split("_")[0])

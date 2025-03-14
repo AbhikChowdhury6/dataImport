@@ -117,10 +117,12 @@ def writeToExistingTSFiles(TSDf, fileNames, targetPath, rows_per_file):
             print(f'hashes match for {fileName}')
 
 
+def getWorkingTSDfPath(deviceDescriptor):
+    return workingDataPath + "_".join(deviceDescriptor) + "/"
+
 ####### this is the function to be used
-def writeWorkingTSDf(responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource, TSDf, targetFileSize = 2 * 1024 * 1024):
-    dataFolderName = "_".join([responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource]) + "/"
-    fullPath = workingDataPath + dataFolderName
+def writeWorkingTSDf(deviceDescriptor, TSDf, targetFileSize = 2 * 1024 * 1024):
+    fullPath = getWorkingTSDfPath(deviceDescriptor)
     if not os.path.exists(fullPath):
         os.makedirs(fullPath)
     currentFileNames = sorted(os.listdir(fullPath))
@@ -138,11 +140,10 @@ def writeWorkingTSDf(responsiblePartyName, instanceName, developingPartyName, de
         rows_per_file = calcRowsPerFile(TSDf, targetFileSize, fullPath, currentFileNames[0])
         writeToExistingTSFiles(TSDf, currentFileNames, fullPath, rows_per_file)
 
-def readWorkingTSDF(responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource,
+def readWorkingTSDF(deviceDescriptor,
                      chnageTz = None, startTime = pd.Timestamp.min.tz_localize("UTC"), endTime = pd.Timestamp.max.tz_localize("UTC")):
     # find the data folder
-    dataFolderName = "_".join([responsiblePartyName, instanceName, developingPartyName, deviceName, dataType, dataSource]) + "/"
-    fullPath = workingDataPath + dataFolderName
+    fullPath = getWorkingTSDfPath(deviceDescriptor)
     if not os.path.exists(fullPath):
         print("no folder with the location " + fullPath)
         return None
