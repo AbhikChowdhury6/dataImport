@@ -15,9 +15,9 @@ import rwWorkingTSDf
 from rwWorkingTSDf import writeWorkingTSDf
 
 
-#exportDataPath = "/home/chowder/Documents/dataExports/fitbit/25-1-7/takeout-20250106T144047Z-001/Takeout/Fitbit/Global Export Data/"
+exportDataPath = "/home/chowder/Documents/dataExports/fitbit/25-1-7/takeout-20250106T144047Z-001/Takeout/Fitbit/Global Export Data/"
 #read in the path of the export
-exportsDataPath = sys.argv[1]
+#exportsDataPath = sys.argv[1]
 
 # get alist of files with HR data
 dir_list = os.listdir(exportDataPath)
@@ -45,12 +45,17 @@ print(f"added {samplesCount} samples")
 # make the DF
 columnNames = ["sampleDT", "confidence", "value"]
 samplesList = sorted(samplesList, key=lambda x: x[0]) #sort by timestamp
+print("finished sorting")
 
 fitbitHRdf = pd.DataFrame(data=samplesList, columns=columnNames)
 fitbitHRdf = fitbitHRdf.set_index("sampleDT")
+print("made dataframe")
 fitbitHRdf.index = fitbitHRdf.index.tz_localize('UTC')
-
+print("loacalized index to utc")
 fitbitHRdf["confidence"] = fitbitHRdf["confidence"].astype('uint8')
 
+deviceDescriptor = ["abhik", "0", "fitbit", "charge4or5", "hr", "builtin"]
 #write the DF
-writeWorkingTSDf("abhik", "0", "fitbit", "charge4or5", "hr", "builtin", fitbitHRdf)
+writeWorkingTSDf(deviceDescriptor, fitbitHRdf)
+
+print("done")

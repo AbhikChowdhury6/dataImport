@@ -76,7 +76,9 @@ def generateDaysVid(deviceDescriptor, ts):
 
 
 
-
+def deleteVidInterval(deviceDescriptor, vidDf, startTime, endTime):
+    
+    pass
 
 
 

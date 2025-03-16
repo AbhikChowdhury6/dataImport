@@ -140,22 +140,22 @@ def writeWorkingTSDf(deviceDescriptor, TSDf, targetFileSize = 2 * 1024 * 1024):
         rows_per_file = calcRowsPerFile(TSDf, targetFileSize, fullPath, currentFileNames[0])
         writeToExistingTSFiles(TSDf, currentFileNames, fullPath, rows_per_file)
 
-def readWorkingTSDF(deviceDescriptor,
-                     chnageTz = None, startTime = pd.Timestamp.min.tz_localize("UTC"), endTime = pd.Timestamp.max.tz_localize("UTC")):
-    # find the data folder
+
+def findFilesForInterval(deviceDescriptor,startTime, endTime):
     fullPath = getWorkingTSDfPath(deviceDescriptor)
     if not os.path.exists(fullPath):
         print("no folder with the location " + fullPath)
-        return None
+        return []
 
 
     fileNames = sorted(os.listdir(fullPath))
     if len(fileNames) == 0:
         print("no data in the folder")
-        return None
+        return []
 
     justTimes = [x.split(".")[0] for x in fileNames]
 
+    filePathsToreturn = []
     foundFileCount = 0
     for fname in justTimes:
         # index 0 is start time, index 1 is end time
@@ -165,27 +165,49 @@ def readWorkingTSDF(deviceDescriptor,
         if not (fnString_to_dt(fnElements[0]) < endTime and fnString_to_dt(fnElements[1]) > startTime):
             continue
         
-        #read in the file
-        foundFileCount += 1
-        if foundFileCount == 1:
-            readDF = pd.read_parquet(fullPath + fname + ".parquet.gzip")
-        else:
-            pd.concat([readDF, pd.read_parquet(fullPath + fname + ".parquet.gzip")])
+        filePathsToreturn.append(fullPath + fname + ".parquet.gzip")
     
-    
-    if foundFileCount == 0:
+    if len(filePathsToreturn) == 0:
         print("No files found for the requested dates")
-        return None
+        return []
+    
+    return filePathsToreturn
 
-    # a sorted copy of the df you read in based on the exact bounds passed in
-    # print(readDF.head())
+def readWorkingTSDF(deviceDescriptor,
+                     chnageTz = None, startTime = pd.Timestamp.min.tz_localize("UTC"), endTime = pd.Timestamp.max.tz_localize("UTC")):
+    
+    paths = findFilesForInterval(deviceDescriptor, startTime, endTime)
+
+    for i, p in enumerate(paths):
+        if i == 0:
+            readDF = pd.read_parquet(p)
+        else:
+            readDF = pd.concat([readDF, pd.read_parquet(p)])
+
     dfToReturn = readDF[startTime:endTime].sort_index().copy()
     
     if chnageTz is not None:
         print("converting to timeszone " + chnageTz)
         dfToReturn.index = dfToReturn.index.tz_convert(chnageTz)
     
-    print(f"read in {len(readDF)} rows from {foundFileCount} files, retruning {len(dfToReturn)} rows")
+    print(f"read in {len(readDF)} rows from {len(paths)} files, retruning {len(dfToReturn)} rows")
 
     return dfToReturn
 
+def deleteTSDfInterval(deviceDescriptor,startTime, endTime):
+    # find the data folder
+    paths = findFilesForInterval(deviceDescriptor, startTime, endTime)
+
+    # load and delete 
+    for i, p in enumerate(paths):
+        if i == 0:
+            readDF = pd.read_parquet(p)
+        else:
+            readDF = pd.concat([readDF, pd.read_parquet(p)])
+        os.remove(p)
+
+    # remove the interval
+    newDf = readDF.loc[(readDF.index < startTime) | (readDF.index >= endTime)]
+    
+    # write the df back
+    writeWorkingTSDf(deviceDescriptor, newDf)
