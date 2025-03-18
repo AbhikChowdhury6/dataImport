@@ -76,10 +76,80 @@ def generateDaysVid(deviceDescriptor, ts):
 
 
 
-def deleteVidInterval(deviceDescriptor, vidDf, startTime, endTime):
+def deleteVidInterval(deviceDescriptor, startTime, endTime):
+    toDelDf = readWorkingTSDF(deviceDescriptor, None, delStartTime, delEndTime)
+    grouped = toDelDf.groupby("videoStartTime")
+    groupKeys = sorted(toDelDf['videoStartTime'].unique())
+    allFileNames = []
+    for firstTs, group in grouped:
+        lastTs = group["videoEndTime"].iloc[0]
+        allFileNames.append(getMP4Path(deviceDescriptor, firstTs, lastTs))
+    allFileNames = sorted(allFileNames)
+    if len(allFileNames) == 0:
+        print("no frames in this interval")
+        return
     
-    pass
+    firstCut = grouped.get_group(groupKeys[0])['videoIndex'].iloc[0] != 0
+    lastRow = grouped.get_group(groupKeys[-1]).iloc[-1]
+    lastCut = lastRow.name != lastRow['videoEndTime']
 
+    firstGroup = grouped.get_group(groupKeys[0])
+    lastGroup = grouped.get_group(groupKeys[-1])
+    output_start_ts = groupKeys[0]
+    output_end_ts = lastGroup['videoEndTime'].iloc[0]
+
+    # get output parameters from the first video
+    cap = cv2.VideoCapture(allFileNames[0])
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    tempFilePath = bulkDataPath + "_".join(deviceDescriptor) + "/temp.mp4"
+    cap.release()
+
+    # make an outout with the temp direcotry
+    out = cv2.VideoWriter(tempFilePath, fourcc, fps, (width, height))
+
+
+    if firstCut:
+        cap = cv2.VideoCapture(allFileNames[0])
+        end_frame_index = firstGroup['videoIndex'].iloc[0]
+        for i in range(end_frame_index):
+            ret, frame = cap.read()
+            if not ret:
+                break
+            out.write(frame)
+        cap.release()
+        if not lastCut:
+            output_end_ts = firstGroup.iloc[0].name
+
+    if lastCut:
+        cap = cv2.VideoCapture(allFileNames[-1])
+        start_frame_index = lastGroup['videoIndex'].iloc[-1] + 1
+        cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame_index)
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            out.write(frame)
+        cap.release()
+        if not firstCut:
+            output_start_ts = lastGroup.iloc[-1].name
+
+    out.release()
+
+    newFileName = getMP4Path(deviceDescriptor, output_start_ts, output_end_ts)
+
+    [os.remove(f) for f in allFileNames]
+
+    if not firstCut and not lastCut:
+        #delete the temp file
+        os.remove(tempFilePath)
+    else:
+        #move the temp file to the new file name
+        shutil.move(tempFilePath, newFileName)
+
+    deleteTSDfInterval(deviceDescriptor, delStartTime, delEndTime)
 
 
 
