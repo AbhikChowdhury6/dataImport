@@ -14,6 +14,8 @@ bulkDataPath = repoPath + "bulkData/"
 daysVidsPath = repoPath + "daysVids/"
 from rwWorkingTSDf import dt_to_fnString, deleteTSDfInterval
 
+output_fourcc = "avc1"
+
 def bulkExtension(time):
     return time.strftime("%Y") + "/" + time.strftime("%m-%d") + "/"
 
@@ -103,7 +105,7 @@ def deleteVidInterval(deviceDescriptor, startTime, endTime):
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    fourcc = cv2.VideoWriter_fourcc(*output_fourcc)
     tempFilePath = bulkDataPath + "_".join(deviceDescriptor) + "/temp.mp4"
     cap.release()
 
