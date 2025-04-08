@@ -65,14 +65,21 @@
 
 
 #new datatype list
-    #uint 8-64
-    #int 8-64
+    #uint 8-64 - int
+    #int 8-64 - int
     #unix_ts-uint
     #unix_ts-int
     #dt64[ns]-u_delay_hz_-7 to dt64[ns]-u_delay_hz_10
     #dt64[ns]-afloat
     #float16-64-bounded_float
     #float16-64-afloat
+
+#backend datatypes
+    # int
+    # unit
+    # afloat
+    # bounded_float
+    # u_delay_hz_-7 to u_delay_hz_10
 
 #notes on floats
 # start timestamps unsigned and regular, but can get large
