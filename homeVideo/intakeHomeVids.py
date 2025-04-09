@@ -52,10 +52,15 @@ for f in foldersToImport:
     
     writeWorkingTSDf(camDescriptors, readDf)
 
+    # print(f)
     for fb in fileNameBases:
+        # print(fb)
         vidStrartTime = fnString_to_dt(fb.split("_")[0])
         fileName = fb + ".mp4"
-        source = folderPath + "/" + fileName
+        source = folderPath + fileName
+        # print(source)
+        if not os.path.exists(source):
+            continue
         destinationBase =  bulkDataPath + "_".join(camDescriptors) + "/" + bulkExtension(vidStrartTime)
         if not os.path.exists(destinationBase):
                 print("made directory " + destinationBase)

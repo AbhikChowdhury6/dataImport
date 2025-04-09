@@ -75,11 +75,11 @@
     #float16-64-afloat
 
 #backend datatypes
-    # int
-    # unit
-    # afloat
-    # bounded_float
-    # u_delay_hz_-7 to u_delay_hz_10
+    # aint
+    # aunit
+    # afloat 5-20 increments of 3 bits
+    # abounded_float 6-21 increments of 3 bits
+    # audelayhz-7 to audelayhz10
 
 #notes on floats
 # start timestamps unsigned and regular, but can get large
@@ -106,3 +106,11 @@
     # cont bit, sign_bit, int bit, d msb 1, d msb 2, d msb 3, d msb 4, d msb 5
         #finish reading all the decimal
         #if the int bit was 1 now read in a u_int, normal 4 bit starter
+
+#fixed precision floats
+    #bounded float
+        # sign_bit, d msb 1, d msb 2, d msb 3, d msb 4, d msb 5, d msb 6, d msb 7
+        # increments of 4 bits of precision based on column 7-11-15-19-23-27-31
+    #general float
+        # sign_bit, int bit, d msb 1, d msb 2, d msb 3, d msb 4, d msb 5, d msb 6
+        # increments of 4 bits of precision 6-10-14-18-22-26-30
