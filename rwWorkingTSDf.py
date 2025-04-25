@@ -62,9 +62,11 @@ def saveRows(TSDf, targetPath, rows_per_file):
 
 #given a df returns the approximate number of rows to get a target file size 
 def calcRowsPerFile(Df, targetFileSize, targetPath, fileName = 'test.parquet.gzip'):
+    # if no files already exist
     if fileName == 'test.parquet.gzip':
         fileRows = 1_000_000
         if len(Df) < fileRows: fileRows = len(Df)-1
+
         Df.iloc[:fileRows].to_parquet(targetPath + fileName,
                         compression='gzip')
         file_size = os.path.getsize(targetPath + fileName)
@@ -121,15 +123,17 @@ def getWorkingTSDfPath(deviceDescriptor):
     return workingDataPath + "_".join(deviceDescriptor) + "/"
 
 ####### this is the function to be used
-def writeWorkingTSDf(deviceDescriptor, TSDf, targetFileSize = 2 * 1024 * 1024):
+def writeWorkingTSDf(deviceDescriptor, TSDf, dedupe = True, targetFileSize = 2 * 1024 * 1024):
     fullPath = getWorkingTSDfPath(deviceDescriptor)
     if not os.path.exists(fullPath):
         os.makedirs(fullPath)
     currentFileNames = sorted(os.listdir(fullPath))
 
     TSDf.index = TSDf.index.tz_convert('UTC')
+    TSDf = TSDf.sort_index()
 
-    TSDf = TSDf[~TSDf.index.duplicated(keep="first")].sort_index()
+    if dedupe:
+        TSDf = TSDf[~TSDf.index.duplicated(keep="first")].sort_index()
 
 
     if len(currentFileNames) == 0:
