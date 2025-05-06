@@ -160,7 +160,6 @@ def findFilesForInterval(deviceDescriptor,startTime, endTime):
     justTimes = [x.split(".")[0] for x in fileNames]
 
     filePathsToreturn = []
-    foundFileCount = 0
     for fname in justTimes:
         # index 0 is start time, index 1 is end time
         fnElements = fname.split("_")

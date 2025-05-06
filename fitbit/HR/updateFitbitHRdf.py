@@ -15,7 +15,7 @@ import rwWorkingTSDf
 from rwWorkingTSDf import writeWorkingTSDf
 
 
-exportDataPath = "/home/chowder/Documents/dataExports/fitbit/25-1-7/takeout-20250106T144047Z-001/Takeout/Fitbit/Global Export Data/"
+exportDataPath = "/home/chowder/Documents/dataExports/fitbit/25-5-6/takeout-20250506T180645Z-001/Takeout/Fitbit/Global Export Data/"
 #read in the path of the export
 #exportsDataPath = sys.argv[1]
 

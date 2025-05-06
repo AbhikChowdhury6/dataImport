@@ -13,10 +13,10 @@ sys.path.append(repoPath)
 import rwWorkingTSDf
 from rwWorkingTSDf import writeWorkingTSDf
 
-#exportLocation = "/home/chowder/Documents/dataExports/polar/polar-user-data-export_9cc7f44f-6622-4e4d-b682-f3065d10aeb1/"
-exportsDataPath = sys.argv[1]
+exportLocation = "/home/chowder/Documents/dataExports/polar/25-5-6/polar-user-data-export_969f16f6-ac73-4665-b63d-ac1ac90fb592/"
+#exportsDataPath = sys.argv[1]
 
-dir_list = os.listdir(exportsDataPath)
+dir_list = os.listdir(exportLocation)
 hrFilenames = [x for x in dir_list if x.split("-")[0] == "training"]
 
 columnNames = ["sampleDT", "value"]
@@ -44,5 +44,6 @@ samplesList = sorted(samplesList, key=lambda x:x[0])
 samplesList = [x for x in samplesList if x[1] > 0]
 polarHRdf = pd.DataFrame(data=samplesList, columns=columnNames)
 polarHRdf = polarHRdf.set_index("sampleDT")
+deviceDescriptor = ["abhik", "0", "polar", "h10", "hr", "builtin"]
 
-writeWorkingTSDf("abhik", "0", "polar", "h10", "hr", "builtin", polarHRdf)
+writeWorkingTSDf(deviceDescriptor, polarHRdf)
