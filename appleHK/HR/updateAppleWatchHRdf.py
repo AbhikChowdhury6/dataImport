@@ -2,15 +2,13 @@ import pandas as pd
 from datetime import datetime
 import os
 import sys
-def getRepoPath():
-    cwd = os.getcwd()
-    delimiter = "\\" if "\\" in cwd else "/"
-    repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("dataImport")+1]) + delimiter
-    return repoPath
-repoPath = getRepoPath()
-sys.path.append(repoPath)
+cwd = os.getcwd()
+delimiter = "\\" if "\\" in cwd else "/"
+repoPath = delimiter.join(cwd.split(delimiter)[:cwd.split(delimiter).index("dataImport")]) + delimiter
+sys.path.append(repoPath + "dataImport/")
 import rwWorkingTSDf
 from rwWorkingTSDf import writeWorkingTSDf
+import xml.etree.ElementTree as ET 
 
 
 exportsDataPath = sys.argv[1]
@@ -19,9 +17,13 @@ deviceName = sys.argv[3]
 
 # my device names
 # Abhik_AppleWatch_10_46mm_0
-# called watch10
+# called AppleWatch-10-46mm
 # Abhik_AppleWatch_6_40mm_0
 # called watch6
+
+#/home/chowder/Documents/dataExports/apple/2025-1-15/export/apple_health_export/export.xml Abhik_AppleWatch_10_46mm_0 AppleWatch-10-46mm
+
+
 
 def getAppleHKSamplesForDevice(targetSourceName, targetRecordType, exportsDataPath):
     # samples are of the format "SampleDT", "Value"
@@ -54,5 +56,6 @@ def getAppleHKSamplesForDevice(targetSourceName, targetRecordType, exportsDataPa
     return df
 
 watchData = getAppleHKSamplesForDevice(appleDeviceName, "HKQuantityTypeIdentifierHeartRate", exportsDataPath)
+dd = ["abhik", '0', "apple", deviceName, 'hr', 'builtin']
 
-writeWorkingTSDf("abhik", "0", "apple", deviceName, "hr", "builtin", watchData)
+writeWorkingTSDf(dd, watchData)
