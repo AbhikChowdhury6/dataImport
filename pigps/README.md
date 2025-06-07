@@ -1,4 +1,4 @@
-getting the gps pps setup on a pi 5
+###getting the gps pps setup on a pi 5
 basically using this tut - https://austinsnerdythings.com/2025/02/14/revisiting-microsecond-accurate-ntp-for-raspberry-pi-with-gps-pps-in-2025/
 
 
@@ -75,7 +75,7 @@ watch -n 1 chronyc tracking
 
 
 
-now for pointing other computers to it
+### now for pointing other computers to it
 on the pi
 sudo nano /etc/chrony/chrony.conf
 allow 10.0.0.0/24
@@ -96,9 +96,23 @@ server 10.0.0.11 iburst minpoll 3 maxpoll 3 prefer
 sudo systemctl restart chrony
 
 
+### getting the gps better
+i wasn't getting good reception using my adafruit module, so i switched to a sparkfun M9N
+out of the box the M9N was able to connect to a bunch of different sattelite networks and that helped a bunch
+even with my updated settings i only get 1 or 2 good gps signals the rest are from other networks
+(i'm in a house with a metallic insulation layer)
 
 
+i went on my windows computer (*gasp*) and opened up u-center
 
+I'm having this problem where i can't seem to configure parameters that don't have a default
+so I was able to configure
+- PMS or CFG-PM operate mode to full power
+- NAV5 or CFG-NAVSPG dynamics model to be stationary 
+
+
+what i didn't seem able to set that i think would be helpful was 
+- TMODE fixed and all the info about my location
 
 
 
