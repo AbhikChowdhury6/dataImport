@@ -91,7 +91,7 @@ sudo apt install chrony -y
 sudo nano /etc/chrony/chrony.conf
 
 add
-server 10.0.0.11 iburst minpoll 3 maxpoll 3 prefer
+server 10.0.0.14 iburst minpoll 3 maxpoll 3 prefer
 
 sudo systemctl restart chrony
 
