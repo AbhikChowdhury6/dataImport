@@ -11,7 +11,7 @@ import shutil
 
 # at this point the data should be in the recentSensorCap folder
 data_loc = repoPath + 'recentSensorCap/'
-dir_list = os.listdir(data_loc)
+dir_list = sorted(os.listdir(data_loc))
 
 if len(dir_list) == 0:
     print('no folders found')
@@ -22,9 +22,10 @@ for folder in dir_list:
     device_descriptor = folder.split('_')[:-1]
 
     folder_loc = data_loc + folder + '/'
-    file_list = os.listdir(folder_loc)
+    file_list = sorted(os.listdir(folder_loc))
     for i, file in enumerate(file_list):
         source = folder_loc + file
+        print("source file is: %s ", source)
         rDf = pd.read_parquet(source)
         rDf.index = rDf.index.tz_convert('UTC')
         if i == 0:
