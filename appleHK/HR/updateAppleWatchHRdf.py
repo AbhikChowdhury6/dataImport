@@ -11,8 +11,9 @@ from rwWorkingTSDf import writeWorkingTSDf
 import xml.etree.ElementTree as ET 
 
 
-exportsDataPath = "/home/chowder/Documents/dataExports/apple/2025-1-15/export/apple_health_export/export.xml"
+exportsDataPath = "/home/chowder/Documents/dataExports/apple/watch10/25-10-24/export/apple_health_export/export.xml"
 appleDeviceName = sys.argv[1]
+#appleDeviceName = "Abhik’s Apple Watch"
 deviceName = sys.argv[2]
 
 # my device names
@@ -22,7 +23,7 @@ deviceName = sys.argv[2]
 # called watch6
 
 # Abhik_AppleWatch_10_46mm_0 AppleWatch-10-46mm
-
+# python updateAppleWatchHRdf.py Abhik_AppleWatch_10_46mm_0 AppleWatch-10-46mm
 
 
 def getAppleHKSamplesForDevice(targetSourceName, targetRecordType, exportsDataPath):
